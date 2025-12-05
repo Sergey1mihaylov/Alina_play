@@ -1,859 +1,731 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no" />
-<title>Тройное соответствие — Telegram Mini App</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Match-3: Кристальная долина</title>
 <style>
   :root{
-    --bg:#0f1724;
-    --panel:#111827;
-    --accent:#ef4444;
-    --accent-2:#2563eb;
-    --muted:#9ca3af;
-    --tile-gap:4px;
-    --ui-h:64px;
-    --radius:12px;
-    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    --bg1: linear-gradient(180deg,#0f1724,#071028);
+    --panel:#0b1220cc;
+    --accent:#ff6b6b;
+    --glass:#ffffff22;
+    --tile-size:calc((min(480px,100vw)-40px)/8);
+    --safe-area-bottom: env(safe-area-inset-bottom, 8px);
+    --font-sans: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
   }
-  html,body{height:100%;margin:0;font-family:var(--font-sans);background:linear-gradient(180deg,#0b1220 0%, #0f1724 100%);color:#fff;-webkit-tap-highlight-color:transparent;}
-  .app{display:flex;flex-direction:column;height:100vh;box-sizing:border-box;padding:8px 10px 12px;}
-  .header{height:var(--ui-h);display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px;border-radius:10px;background:rgba(255,255,255,0.02);backdrop-filter:blur(2px);}
-  .header .left, .header .center, .header .right{display:flex;align-items:center;gap:8px;}
-  .title{font-weight:600;font-size:16px}
-  .stat{font-size:13px;color:var(--muted)}
-  .main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;margin-top:6px;}
-  /* grid container */
-  .grid-wrap{position:relative;width:95vw;max-width:720px;background:transparent;border-radius:14px;padding:6px;display:flex;flex-direction:column;align-items:center;}
-  .board{position:relative;width:100%;background:rgba(255,255,255,0.02);border-radius:10px;padding:8px;box-sizing:border-box;display:flex;justify-content:center;align-items:center;}
-  /* dynamic grid using CSS variables */
-  .game-grid{display:grid;grid-auto-rows:var(--tile-size);grid-template-columns:repeat(var(--cols), var(--tile-size));gap:var(--tile-gap);width:100%;max-width:100%;}
-  .tile{display:flex;align-items:center;justify-content:center;font-size:calc(var(--tile-size) * 0.5);width:var(--tile-size);height:var(--tile-size);border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(0,0,0,0.06));box-shadow:0 3px 0 rgba(0,0,0,0.25);user-select:none;touch-action:none; position:relative; transition:transform 220ms cubic-bezier(.2,.9,.2,1), opacity 180ms;}
-  .tile[data-bonus="bomb"]{box-shadow:0 6px 0 rgba(200,30,30,0.2);border:2px solid rgba(255,80,80,0.12);}
-  .tile.empty{opacity:0;transform:scale(0.9);pointer-events:none;}
-  .tile.selected{transform:scale(0.95) translateZ(0);outline:3px solid rgba(255,255,255,0.12);box-shadow:0 6px 18px rgba(0,0,0,0.5);}
-  .tile.removing{animation:popRemove 260ms ease forwards;}
-  @keyframes popRemove{0%{transform:scale(1);opacity:1;}80%{transform:scale(1.25);opacity:1;}100%{transform:scale(0.2);opacity:0;}}
-  /* overlay canvas for line drawing */
-  canvas.line-canvas{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:40;}
-  /* controls bottom */
-  .controls{height:56px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px;margin-top:6px;}
-  .btn{height:44px;padding:6px 12px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.03);color:#fff;display:flex;align-items:center;gap:8px;font-size:15px;}
-  .btn.tall{height:48px;padding:8px 14px;}
-  .goal-bar{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.02);padding:8px;border-radius:10px;width:100%;box-sizing:border-box;}
-  .progress{height:10px;background:rgba(255,255,255,0.06);border-radius:6px;overflow:hidden;flex:1;}
-  .progress > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent-2),var(--accent));width:0%;}
-  .hud{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.02);}
-  .small{font-size:12px;color:var(--muted);}
-  .centered{display:flex;align-items:center;justify-content:center;}
-  /* responsive tile size */
-  @media (max-width:420px){
-    :root{--tile-gap:3px;}
+  html,body{height:100%;margin:0;font-family:var(--font-sans);background:var(--bg1);color:#e6eef8;-webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;}
+  .app{max-width:480px;margin:12px auto;padding:12px;box-sizing:border-box;}
+  header{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .title{font-weight:700;font-size:18px;display:flex;flex-direction:column;line-height:1;}
+  .subtitle{font-size:12px;color:#a7c0df}
+  .top-controls{display:flex;gap:8px;align-items:center;}
+  .btn{background:var(--panel);border-radius:10px;padding:8px 10px;font-size:13px;border:1px solid rgba(255,255,255,0.03);cursor:pointer;color:#eaf6ff}
+  .btn.small{padding:6px 8px;font-size:12px;border-radius:8px}
+  .hud{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  .panel{background:var(--panel);border-radius:12px;padding:10px;box-shadow:0 6px 18px rgba(0,0,0,0.45);backdrop-filter: blur(6px);}
+  .score{font-weight:700;font-size:20px}
+  .meta{font-size:12px;color:#9fb9db}
+  .board-wrap{display:flex;gap:12px;align-items:flex-start;flex-direction:row;justify-content:center;}
+  .board{width:calc(var(--tile-size)*8);height:calc(var(--tile-size)*8);display:grid;grid-template-columns:repeat(8,1fr);grid-auto-rows:var(--tile-size);gap:6px;padding:6px;background:linear-gradient(180deg,#082033,#052033);border-radius:12px;box-shadow:inset 0 2px 8px #0005;}
+  .cell{position:relative;width:100%;height:100%;border-radius:8px;overflow:visible;touch-action:none}
+  .tile{position:absolute;left:0;top:0;right:0;bottom:0;margin:auto;display:flex;align-items:center;justify-content:center;border-radius:8px;user-select:none;cursor:pointer;transition:transform 180ms cubic-bezier(.2,.9,.2,1), opacity 180ms;}
+  .tile .gem{width:76%;height:76%;border-radius:8px;box-shadow:inset 0 6px 12px rgba(255,255,255,0.06), 0 6px 14px rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;text-shadow:0 1px 0 rgba(0,0,0,0.6)}
+  /* gem colors */
+  .gem.g1{background:linear-gradient(180deg,#ff5b5b,#c73a3a)}
+  .gem.g2{background:linear-gradient(180deg,#4f9dff,#2a6fc7)}
+  .gem.g3{background:linear-gradient(180deg,#49d46f,#1b9a4a)}
+  .gem.g4{background:linear-gradient(180deg,#cd7cff,#8d3fbf)}
+  .gem.g5{background:linear-gradient(180deg,#ffd36b,#d08a2c)}
+  .gem.g6{background:linear-gradient(180deg,#d6f7ff,#7fd7ea);color:#08464f}
+  /* special markers */
+  .tile .mark{position:absolute;right:4px;top:4px;font-size:11px;padding:2px 5px;border-radius:6px;background:#0006}
+  .tile.selected{transform:scale(1.06) rotate(-2deg);z-index:5;box-shadow:0 10px 30px rgba(0,0,0,0.6)}
+  .tile.removing{opacity:0;transform:scale(.6) rotate(8deg)}
+  .obstacle{position:absolute;left:8%;top:8%;width:84%;height:84%;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;background:rgba(0,0,0,0.32);color:#fff;padding:4px;text-align:center}
+  .ice{background:linear-gradient(180deg,#dff6ff44,#9ddbf444);border:2px solid rgba(255,255,255,0.06);box-shadow:inset 0 4px 8px rgba(255,255,255,0.06)}
+  .crate{background:linear-gradient(180deg,#7a4b2b,#5a341f);box-shadow:inset 0 6px 8px rgba(0,0,0,0.3)}
+  .controls{display:flex;flex-direction:column;gap:8px;}
+  .side-panel{min-width:140px;display:flex;flex-direction:column;gap:8px}
+  .goal{font-size:13px}
+  .bottom-nav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--safe-area-bottom) + 8px);width:calc(min(480px,100vw) - 24px);display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:24px;background:linear-gradient(180deg,#082135,#021122);box-shadow:0 10px 30px rgba(0,0,0,0.6)}
+  .nav-btn{background:transparent;border:none;color:#cfeaff;font-weight:600;padding:8px 10px;border-radius:18px;cursor:pointer}
+  .smalltext{font-size:12px;color:#9fb9db}
+  .row{display:flex;gap:8px;align-items:center}
+  .stars{display:flex;gap:4px}
+  .star{width:18px;height:18px;background:linear-gradient(180deg,#fff69a,#ffb84f);border-radius:4px;box-shadow:0 2px 6px rgba(0,0,0,0.4)}
+  .overlay{position:fixed;left:0;top:0;width:100%;height:100%;display:none;align-items:center;justify-content:center;padding:20px;box-sizing:border-box}
+  .overlay.show{display:flex}
+  .modal{background:#07142a;color:#e6f6ff;padding:16px;border-radius:12px;max-width:420px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,0.6)}
+  .modal h2{margin:0 0 8px;font-size:18px}
+  .modal p{margin:8px 0}
+  .level-badge{font-size:13px;padding:6px 8px;border-radius:10px;background:#031826;color:#bfe6ff}
+  footer{color:#9fb9db;font-size:12px;text-align:center;margin-top:12px}
+  @media (max-width:520px){
+    :root{--tile-size:calc((100vw - 34px)/8)}
+    .app{padding:8px;margin:8px}
   }
-  /* theme for telegram color scheme (light/dark) */
-  .light-theme{background:linear-gradient(180deg,#f5f7fb,#eaf0ff);color:#0b1220}
-  .light-theme .tile{background:linear-gradient(180deg,#fff,#f1f5f9);color:#0b1220}
-  .hintFlash{animation:flash 800ms ease;}
-  @keyframes flash{0%{box-shadow:0 0 0 rgba(255,255,255,0);}50%{box-shadow:0 0 18px rgba(255,255,255,0.06);}100%{box-shadow:0 0 0 rgba(255,255,255,0);}}
-  /* inventory */
-  .inventory{display:flex;gap:6px;align-items:center;}
-  .inv-item{padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.02);font-size:14px;}
 </style>
 </head>
 <body>
-<div class="app" id="app">
-  <div class="header" id="header">
-    <div class="left">
-      <div class="title">Тройное соответствие</div>
-      <div class="small stat" id="levelLabel">Уровень 1</div>
+<div class="app">
+  <header>
+    <div class="title">
+      <div>Match-3: Кристальная долина</div>
+      <div class="subtitle">Яркие кристаллы, уровни и комбо</div>
     </div>
-    <div class="center">
-      <div class="hud">
-        <div class="small">Очки</div>
-        <div style="font-weight:700;margin-left:6px;" id="score">0</div>
+    <div class="top-controls">
+      <div class="level-badge panel" id="levelBadge">Уровень 1</div>
+      <button class="btn small" id="soundToggle">🔊</button>
+      <button class="btn small" id="menuBtn">☰</button>
+    </div>
+  </header>
+
+  <div class="hud">
+    <div class="panel" style="flex:1">
+      <div class="row" style="justify-content:space-between">
+        <div>
+          <div class="score" id="score">0</div>
+          <div class="smalltext">Очки</div>
+        </div>
+        <div style="text-align:right">
+          <div class="meta" id="movesOrTimer">Ходы: 30</div>
+          <div class="smalltext" id="goalText">Цель: 10000 очков</div>
+        </div>
       </div>
     </div>
-    <div class="right">
-      <div class="hud"><div class="small">Время</div><div style="font-weight:700;margin-left:6px;" id="timer">--</div></div>
+
+    <div class="panel side-panel">
+      <div class="goal"><strong>Цель</strong><div id="goalList">Набрать 10000 очков</div></div>
+      <div class="row">
+        <div class="smalltext">Жизни</div>
+        <div id="lives" style="margin-left:auto">❤❤❤❤❤</div>
+      </div>
+      <div class="row">
+        <div class="smalltext">Бустеры</div>
+        <div style="margin-left:auto" id="boosts">
+          <button class="btn small" data-boost="hammer">Молот</button>
+          <button class="btn small" data-boost="shuffle">Перемешать</button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="main">
-    <div class="grid-wrap" id="gridWrap" role="application" aria-label="Игровое поле">
-      <div class="board" id="board">
-        <div id="grid" class="game-grid" aria-hidden="false"></div>
-        <canvas class="line-canvas" id="lineCanvas"></canvas>
-      </div>
+  <div class="board-wrap">
+    <div class="board panel" id="board"></div>
+  </div>
 
-      <div class="goal-bar" id="goalBar">
-        <div style="min-width:120px;" id="goalText">Цель: собрать 10 троек</div>
-        <div class="progress"><i id="goalProgress" style="width:0%"></i></div>
-        <div class="small" id="goalCount">0/0</div>
-      </div>
+  <div class="bottom-nav" role="navigation">
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="nav-btn" id="restartBtn">↺ Перезапустить</button>
+      <button class="nav-btn" id="pauseBtn">⏸ Пауза</button>
     </div>
-
-    <div class="controls">
-      <button class="btn tall" id="pauseBtn">⏸ Пауза</button>
-      <div style="display:flex;gap:8px;flex:1;justify-content:flex-end;">
-        <div class="inventory" id="inventoryBox"></div>
-        <button class="btn" id="restartBtn">🔄 Перезапуск</button>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div class="smalltext">Уровень <span id="levelNum">1</span></div>
+      <div class="stars" id="starBox">
+        <div class="star" style="opacity:.15"></div>
+        <div class="star" style="opacity:.15"></div>
+        <div class="star" style="opacity:.15"></div>
       </div>
     </div>
   </div>
+
+  <footer>Сохранение прогресса: локально. Версия мини-демо.</footer>
+</div>
+
+<!-- Overlays -->
+<div class="overlay" id="overlay">
+  <div class="modal" id="modalContent"></div>
 </div>
 
 <script>
-/* =========================
-   GameData & Assets
-   ========================= */
-const GameData = {
-  levels: [
-    { id:1, grid:{rows:6, cols:6}, items:['🍎','🍊','🍌'], goal:{type:'collectTriples', target:10}, timeLimit:120 },
-    { id:2, grid:{rows:7, cols:7}, items:['🐶','🐱','🐭','🐹'], goal:{type:'collectSpecific', item:'🐶', target:15}, timeLimit:150 },
-    { id:3, grid:{rows:7, cols:6}, items:['🍇','🍓','🍒','🍐','🍋'], goal:{type:'collectTriples', target:18}, timeLimit:160 },
-    { id:4, grid:{rows:6, cols:6}, items:['⚽','🏀','🏈','🎾'], goal:{type:'collectTriples', target:12}, timeLimit:120 },
-    { id:5, grid:{rows:8, cols:8},
-      items:[
-        {id:'apple', states:['🍎','🍏','🍎➜']},
-        {id:'flower', states:['🌱','🌿','🌻']},
-        {id:'leaf', states:['🍂','🍃','🍁']}
-      ],
-      goal:{type:'collectTriples', target:20},
-      timeLimit:210
-    }
-  ],
-  assets: {
-    // for prototype we use emoji. could be replaced with svg/base64 strings.
-  }
-};
+/* Match-3: Кристальная долина — single-file implementation.
+   Features included (minimal, functional):
+   - 8x8 grid, 6 gem types
+   - swap by tap or drag
+   - matches resolved, tiles fall down, new tiles spawn
+   - combos and scoring, chain multiplier
+   - special tiles: striped (row/col), bomb (radius), color-bomb
+   - obstacles: crate (1 hit), ice (needs break)
+   - levels with targets (points / clear obstacles)
+   - stars (1-3), lives, boosters (hammer/shuffle), pause/restart
+   - progress saved to localStorage
+   - simple WebAudio feedback (toggleable)
+*/
 
-/* =========================
-   LocalStorage keys
-   ========================= */
-const LS = {
-  currentLevel: 'triple_currentLevel',
-  score: 'triple_score',
-  inventory: 'triple_inventory',
-  settings: 'triple_settings'
-};
+/* ---------- CONFIG ---------- */
+const ROWS = 8, COLS = 8;
+const GEM_TYPES = 6;
+const TILE_GAP = 6;
+const START_LIVES = 5;
 
-/* =========================
-   Global state
-   ========================= */
+/* Level data (demo set). Each level: {type:'score'|'clear', target: number, moves: number, obstacles:Array of {r,c,type,hits}} */
+const LEVELS = [
+  {type:'score', target:8000, moves:30, name:'Лесная поляна', obstacles:[]},
+  {type:'score', target:12000, moves:28, name:'Ледяная пещера', obstacles:[
+    // ice in some positions
+    {r:2,c:3,type:'ice',hits:1},{r:2,c:4,type:'ice',hits:1},{r:3,c:4,type:'ice',hits:1},
+  ]},
+  {type:'clear', target:8, moves:32, name:'Вулканическое ущелье', obstacles:[
+    {r:4,c:4,type:'crate',hits:2},{r:5,c:3,type:'crate',hits:2}
+  ]},
+  {type:'score', target:18000, moves:25, name:'Сверкающие пещеры', obstacles:[]},
+  {type:'score', target:24000, moves:22, name:'Затерянный оазис', obstacles:[
+    {r:1,c:1,type:'ice',hits:1},{r:1,c:2,type:'crate',hits:2}
+  ]},
+  // later levels repeat pattern — more can be added externally
+];
+
+const STORAGE_KEY = 'match3_save_v1';
+
+/* ---------- STATE ---------- */
 let state = {
-  levelIndex: 0, // index in GameData.levels
-  grid: [],      // 2D array [r][c] of tile objects or null
-  rows: 6, cols: 6,
-  tileSize: 56,
+  levelIndex: 0,
   score: 0,
-  inventory: {},
-  settings: {sound:true,music:false},
-  selection: [], // [{r,c,el,tile}]
-  isTouching: false,
-  timer: null,
-  timeLeft: 0,
-  goalProgress: 0,
-  removing: false,
-  canvasScale: {w:0,h:0}
+  lives: START_LIVES,
+  levelProgress: {}, // stars per level
+  board: [], // matrix of tile objects
+  obstacles: {}, // key "r_c" => obstacle data
+  movesLeft: 0,
+  running: true,
+  selected: null,
+  combos: 0,
+  soundOn: true,
+  boosts: {hammer:1,shuffle:1},
+  lastSave: Date.now()
 };
 
-/* =========================
-   Utilities
-   ========================= */
-const $ = (s,el=document)=>el.querySelector(s);
-const $$ = (s,el=document)=>Array.from(el.querySelectorAll(s));
-const rand = (arr) => arr[Math.floor(Math.random()*arr.length)];
-const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
-
-/* =========================
-   Telegram WebApp integration (safe)
-   ========================= */
-const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
-if(tg){
-  try{ tg.expand(); }catch(e){}
-  try{ if(tg.setHeaderColor) tg.setHeaderColor('#2563eb'); }catch(e){}
-  try{ if(tg.setBackgroundColor) tg.setBackgroundColor('#0b1220'); }catch(e){}
-  try{ document.body.classList.add((tg.colorScheme||'dark') + '-theme'); }catch(e){}
-  try{
-    if(tg.BackButton){
-      tg.BackButton.show();
-      tg.BackButton.onClick(()=>{
-        // Возврат в меню уровней — упрощённо: перезапуск уровня
-        showLevelSelect();
-      });
-    }
-  }catch(e){}
+/* ---------- AUDIO ---------- */
+let audioCtx;
+function ensureAudio(){
+  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+function beep(freq=440,dur=0.06,vol=0.06){
+  if(!state.soundOn) return;
+  ensureAudio();
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type='sine'; o.frequency.value = freq;
+  g.gain.value = vol;
+  o.connect(g); g.connect(audioCtx.destination);
+  o.start(); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
+  setTimeout(()=>o.stop(), dur*1000 + 30);
 }
 
-/* =========================
-   Initialization & UI
-   ========================= */
-const gridEl = $('#grid');
-const canvas = $('#lineCanvas');
-const boardEl = $('#board');
-const scoreEl = $('#score');
-const levelLabel = $('#levelLabel');
-const timerEl = $('#timer');
-const goalText = $('#goalText');
-const goalProgressEl = $('#goalProgress');
-const goalCountEl = $('#goalCount');
-const inventoryBox = $('#inventoryBox');
+/* ---------- UTIL ---------- */
+function key(r,c){return r+'_'+c}
+function randInt(n){return Math.floor(Math.random()*n)}
+function shuffleArray(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a;}
 
-function init(){
-  loadSettings();
-  loadProgress();
-  bindUI();
-  // start at saved level or level 0
-  openLevel(state.levelIndex);
-  window.addEventListener('resize', onResize);
-  onResize();
-  requestAnimationFrame(drawLoop);
-}
-
-function bindUI(){
-  $('#pauseBtn').addEventListener('click',togglePause);
-  $('#restartBtn').addEventListener('click',()=>resetLevel(true));
-  // touch events on board
-  boardEl.addEventListener('touchstart', onTouchStart, {passive:false});
-  boardEl.addEventListener('touchmove', onTouchMove, {passive:false});
-  boardEl.addEventListener('touchend', onTouchEnd, {passive:false});
-  // mouse fallback
-  boardEl.addEventListener('mousedown', onMouseDown);
-  document.addEventListener('mousemove', onMouseMove);
-  document.addEventListener('mouseup', onMouseUp);
-}
-
-/* =========================
-   Persistence
-   ========================= */
+/* ---------- SAVE / LOAD ---------- */
 function saveProgress(){
   try{
-    localStorage.setItem(LS.currentLevel, String(state.levelIndex));
-    localStorage.setItem(LS.score, String(state.score));
-    localStorage.setItem(LS.inventory, JSON.stringify(state.inventory));
-    localStorage.setItem(LS.settings, JSON.stringify(state.settings));
-  }catch(e){ console.warn('LS save failed',e); }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      levelIndex: state.levelIndex,
+      score: state.score,
+      lives: state.lives,
+      levelProgress: state.levelProgress,
+      boosts: state.boosts,
+      lastSave: Date.now()
+    }));
+    state.lastSave = Date.now();
+    //console.log('saved');
+  }catch(e){console.warn('save failed',e)}
 }
 function loadProgress(){
   try{
-    const lvl = parseInt(localStorage.getItem(LS.currentLevel));
-    if(!isNaN(lvl)) state.levelIndex = lvl;
-    const sc = parseInt(localStorage.getItem(LS.score));
-    if(!isNaN(sc)) state.score = sc;
-    const inv = localStorage.getItem(LS.inventory);
-    if(inv) state.inventory = JSON.parse(inv);
-  }catch(e){ console.warn('LS load failed',e); }
-}
-function loadSettings(){
-  try{
-    const s = localStorage.getItem(LS.settings);
-    if(s) state.settings = JSON.parse(s);
-  }catch(e){}
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){const o = JSON.parse(raw); if(o){ state.levelIndex = o.levelIndex||0; state.score = o.score||0; state.lives = o.lives||START_LIVES; state.levelProgress = o.levelProgress||{}; state.boosts = o.boosts||state.boosts; }}
+  }catch(e){console.warn('load failed', e)}
 }
 
-/* =========================
-   Level / Grid creation
-   ========================= */
-function openLevel(index){
-  state.levelIndex = clamp(index,0,GameData.levels.length-1);
-  const lvl = GameData.levels[state.levelIndex];
-  state.rows = lvl.grid.rows;
-  state.cols = lvl.grid.cols;
-  state.grid = Array.from({length:state.rows},()=>Array(state.cols).fill(null));
-  state.score = state.score || parseInt(localStorage.getItem(LS.score)) || 0;
-  state.inventory = state.inventory || {};
-  state.goalProgress = 0;
-  state.timeLeft = lvl.timeLimit || 120;
-  setupGridForLevel(lvl);
-  renderGrid();
-  updateHeader();
-  startTimer();
-  saveProgress();
+/* ---------- BOARD / TILES ---------- */
+/* Tile format:
+ {type: 0..GEM_TYPES-1, special: null|'stripH'|'stripV'|'bomb'|'color', id:unique}
+ Obstacles stored separately with keys r_c -> {type:'ice'|'crate', hits:int}
+*/
+let uidCounter=1;
+function makeTile(type=null){
+  return {type: type===null?randInt(GEM_TYPES):type, special:null, id:uidCounter++};
 }
 
-function setupGridForLevel(lvl){
-  // Pre-generate grid with items available for level.
-  const items = normalizeLevelItems(lvl.items);
-  for(let r=0;r<state.rows;r++){
-    for(let c=0;c<state.cols;c++){
-      state.grid[r][c] = spawnRandomTile(items);
+/* Initialize board with no immediate matches */
+function initBoard(levelIdx){
+  state.board = Array.from({length:ROWS},()=>Array(COLS).fill(null));
+  // place obstacles
+  state.obstacles = {};
+  const lvl = LEVELS[levelIdx];
+  if(lvl && lvl.obstacles) for(const ob of lvl.obstacles) state.obstacles[key(ob.r,ob.c)] = {type:ob.type,hits:ob.hits||1};
+  // fill ensuring no immediate matches
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      let tries=0, t;
+      do{
+        t = makeTile();
+        state.board[r][c] = t;
+        tries++;
+        if(tries>50) break;
+      } while(checkImmediateMatchAt(r,c));
     }
   }
-  // Ensure no immediate triple matches on start — simple loop to break lines
-  removeInitialMatches(items);
+  state.movesLeft = lvl.moves;
+  state.score=0;
+  state.combos=0;
+  state.selected = null;
+  renderAll();
 }
 
-function normalizeLevelItems(items){
-  // convert to array of possible tile descriptors {type,display,states?}
-  if(!items) return [];
-  const out = [];
-  items.forEach(it=>{
-    if(typeof it === 'string'){
-      out.push({type:it,display:it});
-    }else if(typeof it === 'object' && it.id && Array.isArray(it.states)){
-      // pick random state upon spawn
-      out.push({type:it.id,display:null, states: it.states});
-    }
-  });
-  return out;
+/* returns true if placing tile at r,c causes immediate match */
+function checkImmediateMatchAt(r,c){
+  const t = state.board[r][c];
+  if(!t) return false;
+  const v = t.type;
+  // horizontal
+  let count=1;
+  if(c-1>=0 && state.board[r][c-1] && state.board[r][c-1].type===v) count++;
+  if(c-2>=0 && state.board[r][c-2] && state.board[r][c-2].type===v) count++;
+  if(count>=3) return true;
+  // vertical
+  count=1;
+  if(r-1>=0 && state.board[r-1][c] && state.board[r-1][c].type===v) count++;
+  if(r-2>=0 && state.board[r-2][c] && state.board[r-2][c].type===v) count++;
+  return count>=3;
 }
 
-function spawnRandomTile(items){
-  if(items.length===0) return null;
-  const choice = rand(items);
-  const tile = { type: choice.type || choice, display: choice.display || (choice.states ? rand(choice.states) : choice.type), bonus:null, id: genId() };
-  return tile;
-}
+/* ---------- RENDER ---------- */
+const boardEl = document.getElementById('board');
+function renderAll(){
+  document.getElementById('score').textContent = state.score;
+  document.getElementById('levelNum').textContent = state.levelIndex + 1;
+  document.getElementById('levelBadge').textContent = `Уровень ${state.levelIndex+1}: ${LEVELS[state.levelIndex].name || ''}`;
+  document.getElementById('movesOrTimer').textContent = `Ходы: ${state.movesLeft}`;
+  const gtxt = LEVELS[state.levelIndex].type === 'score' ? `Набрать ${LEVELS[state.levelIndex].target}` : `Уничтожить: ${LEVELS[state.levelIndex].target}`;
+  document.getElementById('goalList').textContent = gtxt;
+  document.getElementById('goalText').textContent = `Цель: ${gtxt}`;
+  document.getElementById('lives').textContent = '❤'.repeat(Math.max(0, state.lives));
 
-function genId(){ return Math.random().toString(36).slice(2,9); }
+  // stars
+  const stars = document.getElementById('starBox').children;
+  const sc = state.levelProgress[state.levelIndex] || 0;
+  for(let i=0;i<3;i++) stars[i].style.opacity = i<sc ? '1' : '.15';
 
-function removeInitialMatches(items){
-  // naive attempt: if any triple in row/col at start, replace center with another
-  for(let r=0;r<state.rows;r++){
-    for(let c=0;c<state.cols;c++){
-      const t = state.grid[r][c];
-      if(!t) continue;
-      // check horizontal
-      if(c<=state.cols-3){
-        const a=state.grid[r][c],b=state.grid[r][c+1],d=state.grid[r][c+2];
-        if(a && b && d && a.display===b.display && b.display===d.display){
-          state.grid[r][c+1] = spawnRandomTile(items);
+  // render grid
+  boardEl.innerHTML = '';
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      const cell = document.createElement('div');
+      cell.className='cell';
+      cell.dataset.r=r; cell.dataset.c=c;
+      const tile = state.board[r][c];
+      if(tile){
+        const tdiv = document.createElement('div');
+        tdiv.className = 'tile';
+        tdiv.dataset.id = tile.id;
+        tdiv.dataset.r = r; tdiv.dataset.c = c;
+        if(state.selected && state.selected.r==r && state.selected.c==c) tdiv.classList.add('selected');
+        // inner gem
+        const gem = document.createElement('div');
+        gem.className = 'gem g'+(tile.type+1);
+        gem.textContent = tile.special==='color'?'★': '';
+        if(tile.special === 'stripH' || tile.special === 'stripV' || tile.special==='bomb'){
+          const mark = document.createElement('div'); mark.className='mark'; 
+          mark.textContent = tile.special==='stripH'?'━':(tile.special==='stripV'?'┃': (tile.special==='bomb'?'✶':'')); 
+          tdiv.appendChild(mark);
+        }else if(tile.special==='color'){
+          const mark = document.createElement('div'); mark.className='mark'; mark.textContent='✦'; tdiv.appendChild(mark);
         }
-      }
-      // check vertical
-      if(r<=state.rows-3){
-        const a=state.grid[r][c],b=state.grid[r+1][c],d=state.grid[r+2][c];
-        if(a && b && d && a.display===b.display && b.display===d.display){
-          state.grid[r+1][c] = spawnRandomTile(items);
+        tdiv.appendChild(gem);
+        // obstacles overlay
+        const ob = state.obstacles[key(r,c)];
+        if(ob){
+          const oel = document.createElement('div'); oel.className='obstacle';
+          oel.textContent = ob.type==='ice' ? `Лёд (${ob.hits})` : `Ящик (${ob.hits})`;
+          oel.classList.add(ob.type==='ice'?'ice':'crate');
+          tdiv.appendChild(oel);
         }
+        cell.appendChild(tdiv);
       }
+      boardEl.appendChild(cell);
     }
   }
 }
 
-/* =========================
-   Render / DOM helpers
-   ========================= */
-function renderGrid(){
-  // set CSS variables for tile size based on container width and cols
-  const cols = state.cols;
-  gridEl.style.setProperty('--cols', cols);
-  // compute tile size to fit within board width while leaving some padding
-  const wrapWidth = document.getElementById('gridWrap').clientWidth - 16; // padding
-  const size = Math.floor((wrapWidth - (cols-1)*parseInt(getComputedStyle(document.documentElement).getPropertyValue('--tile-gap')) - 20) / cols);
-  state.tileSize = Math.max(36, Math.min(84, size));
-  gridEl.style.setProperty('--tile-size', state.tileSize + 'px');
-
-  // clear and repopulate
-  gridEl.innerHTML = '';
-  for(let r=0;r<state.rows;r++){
-    for(let c=0;c<state.cols;c++){
-      const tile = state.grid[r][c];
-      const tileEl = document.createElement('div');
-      tileEl.className = 'tile';
-      tileEl.dataset.r = r;
-      tileEl.dataset.c = c;
-      tileEl.setAttribute('role','button');
-      tileEl.setAttribute('aria-label', tile ? tile.display : 'пусто');
-      if(!tile) tileEl.classList.add('empty');
-      else{
-        tileEl.textContent = tile.display;
-        if(tile.bonus === 'bomb') tileEl.dataset.bonus = 'bomb';
+/* ---------- MATCH DETECTION ---------- */
+function findMatches(){
+  const matches = []; // array of arrays of {r,c}
+  const used = Array.from({length:ROWS},()=>Array(COLS).fill(false));
+  // horizontal
+  for(let r=0;r<ROWS;r++){
+    let c=0;
+    while(c<COLS){
+      const t = state.board[r][c];
+      if(!t){ c++; continue; }
+      let len=1; const v=t.type;
+      for(let k=c+1;k<COLS;k++){
+        const nt = state.board[r][k];
+        if(nt && nt.type===v) len++; else break;
       }
-      gridEl.appendChild(tileEl);
+      if(len>=3){
+        const arr=[];
+        for(let k=c;k<c+len;k++){ arr.push({r,col:k}); used[r][k]=true; }
+        matches.push(arr);
+      }
+      c+=Math.max(1,len);
     }
   }
-
-  // resize canvas to match board rect
-  resizeCanvas();
-  updateUI();
-}
-
-function updateHeader(){
-  const lvl = GameData.levels[state.levelIndex];
-  levelLabel.textContent = `Уровень ${lvl.id}`;
-  scoreEl.textContent = String(state.score);
-  timerEl.textContent = formatTime(state.timeLeft);
-  // goal
-  if(lvl.goal.type === 'collectTriples'){
-    goalText.textContent = `Цель: собрать ${lvl.goal.target} троек`;
-    updateGoalBar();
-  }else if(lvl.goal.type === 'collectSpecific'){
-    goalText.textContent = `Цель: собрать ${lvl.goal.target} ${lvl.goal.item}`;
-    updateGoalBar();
-  }
-}
-
-function updateGoalBar(){
-  const lvl = GameData.levels[state.levelIndex];
-  const target = lvl.goal.target || 0;
-  const percent = Math.min(100, (state.goalProgress/target)*100);
-  goalProgressEl.style.width = percent + '%';
-  goalCountEl.textContent = `${state.goalProgress}/${target}`;
-}
-
-function updateUI(){
-  // inventory
-  inventoryBox.innerHTML = '';
-  for(const k in state.inventory){
-    const div = document.createElement('div');
-    div.className = 'inv-item';
-    div.textContent = `${k}×${state.inventory[k]}`;
-    inventoryBox.appendChild(div);
-  }
-  scoreEl.textContent = String(state.score);
-  timerEl.textContent = formatTime(state.timeLeft);
-  updateGoalBar();
-}
-
-/* =========================
-   Timer
-   ========================= */
-function startTimer(){
-  stopTimer();
-  const lvl = GameData.levels[state.levelIndex];
-  state.timeLeft = lvl.timeLimit || state.timeLeft;
-  timerEl.textContent = formatTime(state.timeLeft);
-  state.timer = setInterval(()=>{
-    state.timeLeft--;
-    if(state.timeLeft<=0){
-      state.timeLeft = 0;
-      stopTimer();
-      onTimeExpired();
-    }
-    updateUI();
-  },1000);
-}
-function stopTimer(){
-  if(state.timer){ clearInterval(state.timer); state.timer = null; }
-}
-function togglePause(){
-  if(state.timer){ stopTimer(); $('#pauseBtn').textContent = '▶️ Продолжить'; }
-  else{ startTimer(); $('#pauseBtn').textContent = '⏸ Пауза'; }
-}
-function onTimeExpired(){
-  // level failed — simple notification and restart
-  alert('Время вышло. Уровень перезапущен.');
-  resetLevel(true);
-}
-
-/* =========================
-   Touch / Mouse handling & selection logic
-   ========================= */
-let inputState = {
-  isDown:false,
-  lastPos:null
-};
-
-function onTouchStart(e){
-  e.preventDefault();
-  const touch = e.changedTouches[0];
-  handlePointerStart({x:touch.clientX,y:touch.clientY});
-}
-function onTouchMove(e){
-  e.preventDefault();
-  const touch = e.changedTouches[0];
-  handlePointerMove({x:touch.clientX,y:touch.clientY});
-}
-function onTouchEnd(e){
-  e.preventDefault();
-  handlePointerEnd();
-}
-function onMouseDown(e){
-  if(e.button!==0) return;
-  handlePointerStart({x:e.clientX,y:e.clientY});
-}
-function onMouseMove(e){
-  if(!inputState.isDown) return;
-  handlePointerMove({x:e.clientX,y:e.clientY});
-}
-function onMouseUp(e){
-  if(!inputState.isDown) return;
-  handlePointerEnd();
-}
-
-function handlePointerStart(pos){
-  inputState.isDown = true;
-  inputState.lastPos = pos;
-  state.selection = [];
-  state.isTouching = true;
-  const tileInfo = getTileUnderPos(pos);
-  if(tileInfo) addToSelection(tileInfo.r,tileInfo.c);
-}
-function handlePointerMove(pos){
-  inputState.lastPos = pos;
-  if(!state.isTouching) return;
-  const tileInfo = getTileUnderPos(pos);
-  if(tileInfo){
-    // if tile under pointer is a valid adjacent tile and same display as selection start
-    if(state.selection.length===0){
-      addToSelection(tileInfo.r,tileInfo.c);
-    }else{
-      const last = state.selection[state.selection.length-1];
-      // if same tile already selected -> ignore
-      if(last.r===tileInfo.r && last.c===tileInfo.c) return;
-      // if tile already in selection but not last -> allow backtracking (remove tail) if previous was that tile
-      const idx = state.selection.findIndex(s=>s.r===tileInfo.r && s.c===tileInfo.c);
-      if(idx>=0){
-        // allow backtrack to idx
-        state.selection.splice(idx+1);
-        refreshSelectionVisuals();
-        return;
+  // vertical
+  for(let c=0;c<COLS;c++){
+    let r=0;
+    while(r<ROWS){
+      const t = state.board[r][c];
+      if(!t){ r++; continue; }
+      let len=1; const v=t.type;
+      for(let k=r+1;k<ROWS;k++){
+        const nt = state.board[k][c];
+        if(nt && nt.type===v) len++; else break;
       }
-      // check adjacency
-      if(isAdjacent(last.r,last.c,tileInfo.r,tileInfo.c)){
-        // check type match: must have same display OR bonus present (bomb can't be chained as normal)
-        const lastTile = state.grid[last.r][last.c];
-        const curTile = state.grid[tileInfo.r][tileInfo.c];
-        if(lastTile && curTile && lastTile.display === curTile.display && (!curTile.bonus || curTile.bonus === null)){
-          addToSelection(tileInfo.r,tileInfo.c);
+      if(len>=3){
+        const arr=[];
+        for(let k=r;k<r+len;k++){ arr.push({r:k,col:c}); used[k][c]=true; }
+        matches.push(arr);
+      }
+      r+=Math.max(1,len);
+    }
+  }
+  // merge overlapping groups into bigger ones
+  // naive merge: create map and union groups that share a cell
+  const groups = [];
+  for(const m of matches){
+    // convert to key set
+    const set = new Set(m.map(x=>key(x.r,x.col)));
+    groups.push(set);
+  }
+  let merged=true;
+  while(merged){
+    merged=false;
+    for(let i=0;i<groups.length;i++){
+      for(let j=i+1;j<groups.length;j++){
+        for(const kcell of groups[j]){
+          if(groups[i].has(kcell)){
+            // merge j into i
+            for(const el of groups[j]) groups[i].add(el);
+            groups.splice(j,1);
+            merged=true; break;
+          }
         }
+        if(merged) break;
       }
+      if(merged) break;
     }
   }
-}
-function handlePointerEnd(){
-  inputState.isDown = false;
-  inputState.lastPos = null;
-  state.isTouching = false;
-  if(state.selection.length>=3){
-    processSelection();
-  }else{
-    // clear selection visuals
-    state.selection = [];
-    refreshSelectionVisuals();
-  }
+  // convert to arrays of positions
+  return groups.map(s=>[...s].map(k=>{const [r,c]=k.split('_').map(Number); return {r,c};}));
 }
 
-/* Helpers to map pointer pos to tile */
-function getTileUnderPos(pos){
-  const rect = gridEl.getBoundingClientRect();
-  const x = pos.x - rect.left;
-  const y = pos.y - rect.top;
-  if(x<0||y<0||x>rect.width||y>rect.height) return null;
-  // compute column and row based on tile size + gap
-  const tileSize = state.tileSize;
-  const gap = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--tile-gap')) || 4;
-  const col = Math.floor(x / (tileSize + gap));
-  const row = Math.floor(y / (tileSize + gap));
-  if(row<0||col<0||row>=state.rows||col>=state.cols) return null;
-  return {r:row,c:col};
-}
-
-function isAdjacent(r1,c1,r2,c2){
-  const dr = Math.abs(r1-r2), dc = Math.abs(c1-c2);
+/* ---------- SWAP ---------- */
+function canSwap(r1,c1,r2,c2){
+  if(r1<0||r1>=ROWS||r2<0||r2>=ROWS||c1<0||c1>=COLS||c2<0||c2>=COLS) return false;
+  const dr = Math.abs(r1-r2), dc=Math.abs(c1-c2);
   return (dr+dc)===1;
 }
 
-function addToSelection(r,c){
-  const tile = state.grid[r][c];
-  if(!tile) return;
-  // don't add bonus tiles as regular selection (they can be activated)
-  // but allow them if same display and no bonus
-  // guard duplicates
-  if(state.selection.find(s=>s.r===r&&s.c===c)) return;
-  state.selection.push({r,c, tile});
-  refreshSelectionVisuals();
-}
-
-/* Visual selection update & canvas drawing */
-function refreshSelectionVisuals(){
-  $$('.tile').forEach(el=>el.classList.remove('selected'));
-  state.selection.forEach(s=>{
-    const selector = `.tile[data-r="${s.r}"][data-c="${s.c}"]`;
-    const el = $(selector, gridEl);
-    if(el) el.classList.add('selected');
-  });
-  // canvas points updated in drawLoop using state.selection and inputState.lastPos
-}
-
-/* =========================
-   Process selection -> removal, scoring, bonuses
-   ========================= */
-async function processSelection(){
-  if(state.removing) return;
-  state.removing = true;
-  const sel = state.selection.slice();
-  // validation: all same display
-  const firstTile = state.grid[sel[0].r][sel[0].c];
-  const allSame = sel.every(s=> state.grid[s.r][s.c] && state.grid[s.r][s.c].display === firstTile.display);
-  if(!allSame){ state.selection=[]; refreshSelectionVisuals(); state.removing=false; return; }
-
-  // determine score and bonus
-  const count = sel.length;
-  let gained = count * 10;
-  if(count>=4) gained += 30; // bonus points
-  state.score += gained;
-
-  // if 4+ -> create bomb at last selected position (simulate by leaving a bomb tile)
-  let createdBomb = false;
-  let bombPos = null;
-  if(count>=4){
-    createdBomb = true;
-    // we'll place bomb at the last position in selection after removals
-    bombPos = sel[sel.length-1];
-  }
-
-  // animate removal
-  for(const s of sel){
-    const el = `.tile[data-r="${s.r}"][data-c="${s.c}"]`;
-    const dom = $(el,gridEl);
-    if(dom){
-      dom.classList.add('removing');
-      // optional small delay between them for effect
-      await wait(40);
-    }
-  }
-  await wait(160);
-
-  // remove tiles from state.grid
-  for(const s of sel){
-    state.grid[s.r][s.c] = null;
-  }
-
-  // if created bomb: place bomb object at bombPos (we'll drop it from top later)
-  if(createdBomb && bombPos){
-    state.grid[bombPos.r][bombPos.c] = { type:'BOMB', display:'💣', bonus:'bomb', id:genId() };
-  }
-
-  // if any special active (bomb adjacent)? check bombs activation during selection (if selected tile adjacent to bomb, detonate)
-  // For simplicity, bombs only created; activation when next to selection will detonate after this removal step:
-  // Find bombs adjacent to any removed tile -> detonate them
-  const bombsToDetonate = [];
-  for(const s of sel){
-    const adj = neighbors(s.r,s.c);
-    for(const a of adj){
-      const t = state.grid[a.r][a.c];
-      if(t && t.bonus === 'bomb'){
-        bombsToDetonate.push({r:a.r,c:a.c});
-      }
-    }
-  }
-  // unique bombs
-  const uniqueBombs = bombsToDetonate.filter((v,i,self)=> i===self.findIndex(x=>x.r===v.r&&x.c===v.c));
-  for(const b of uniqueBombs){
-    detonateBomb(b.r,b.c);
-  }
-
-  // cascade gravity and refill
-  await applyGravityAndRefill();
-
-  // update goals & UI
-  const lvl = GameData.levels[state.levelIndex];
-  if(lvl.goal.type==='collectTriples'){
-    state.goalProgress += 1;
-  }else if(lvl.goal.type==='collectSpecific'){
-    if(firstTile.display === lvl.goal.item) state.goalProgress += count; // each tile counts
-  }
-
-  // check victory condition
-  const target = lvl.goal.target || 99999;
-  if(state.goalProgress >= target){
-    await wait(200);
-    onLevelComplete();
-  }
-
-  state.selection=[];
-  refreshSelectionVisuals();
-  updateUI();
-  saveProgress();
-  state.removing = false;
-}
-
-/* Bomb detonation: remove surrounding 8 tiles */
-function detonateBomb(r,c){
-  const toRemove = [{r,c}].concat(neighbors(r,c));
-  for(const pos of toRemove){
-    if(state.grid[pos.r] && state.grid[pos.r][pos.c]){
-      state.grid[pos.r][pos.c] = null;
-    }
-  }
-}
-
-/* neighbors helper */
-function neighbors(r,c){
-  const list=[];
-  for(let dr=-1;dr<=1;dr++){
-    for(let dc=-1;dc<=1;dc++){
-      if(dr===0 && dc===0) continue;
-      const nr=r+dr, nc=c+dc;
-      if(nr>=0 && nr<state.rows && nc>=0 && nc<state.cols) list.push({r:nr,c:nc});
-    }
-  }
-  return list;
-}
-
-/* Apply gravity: for each column, drop tiles down and create new on top */
-async function applyGravityAndRefill(){
-  const items = normalizeLevelItems(GameData.levels[state.levelIndex].items);
-  for(let c=0;c<state.cols;c++){
-    // read column bottom to top
-    const colTiles = [];
-    for(let r=state.rows-1;r>=0;r--){
-      if(state.grid[r][c]) colTiles.push(state.grid[r][c]);
-    }
-    // fill spaces on top with new tiles
-    const missing = state.rows - colTiles.length;
-    const newTiles = Array.from({length:missing}, ()=> spawnRandomTile(items));
-    // new arrangement top->bottom
-    const newCol = newTiles.concat(colTiles.reverse()).reverse();
-    // write back
-    for(let r=0;r<state.rows;r++){
-      state.grid[r][c] = newCol[r] || null;
-    }
-  }
-  // nice little render & cascade animation: re-render grid and briefly flash
-  renderGrid();
-  await wait(220);
-}
-
-/* Level completion */
-function onLevelComplete(){
-  stopTimer();
-  state.score += 100 * (GameData.levels[state.levelIndex].id); // reward
-  alert('Уровень пройден! Очки: ' + state.score);
-  // advance to next level if available
-  if(state.levelIndex < GameData.levels.length -1){
-    state.levelIndex++;
-    saveProgress();
-    openLevel(state.levelIndex);
+/* Perform swap and check if it creates a match; returns true if swap resulted in any match */
+function doSwap(r1,c1,r2,c2,force=false){
+  if(!canSwap(r1,c1,r2,c2)) return false;
+  const a = state.board[r1][c1], b=state.board[r2][c2];
+  if(!a || !b) return false;
+  // swap
+  state.board[r1][c1]=b; state.board[r2][c2]=a;
+  // if forced (power activation), accept regardless
+  const matches = findMatches();
+  if(matches.length>0 || force){
+    playSwapAnim(r1,c1,r2,c2);
+    state.movesLeft--;
+    processMatchesSequence();
+    return true;
   }else{
-    // completed last level — reset progress or stay
-    alert('Поздравляем! Все уровни пройдены.');
-    // keep at last level
-    saveProgress();
+    // revert with small animation
+    setTimeout(()=>{ state.board[r1][c1]=a; state.board[r2][c2]=b; renderAll(); }, 160);
+    return false;
   }
 }
 
-/* Reset level */
-function resetLevel(save=false){
-  if(save===false) { /*per user: restart level*/ }
-  const lvl = GameData.levels[state.levelIndex];
-  state.grid = Array.from({length:state.rows},()=>Array(state.cols).fill(null));
-  setupGridForLevel(lvl);
-  renderGrid();
-  startTimer();
-  state.goalProgress = 0;
-  if(save) saveProgress();
-}
-
-/* =========================
-   Helpers & draw loop for canvas
-   ========================= */
-function wait(ms){ return new Promise(res=>setTimeout(res,ms)); }
-
-function formatTime(sec){
-  if(sec==null) return '--';
-  const m = Math.floor(sec/60), s = sec%60;
-  return `${m}:${String(s).padStart(2,'0')}`;
-}
-
-function resizeCanvas(){
-  const rect = boardEl.getBoundingClientRect();
-  canvas.width = Math.round(rect.width * devicePixelRatio);
-  canvas.height = Math.round(rect.height * devicePixelRatio);
-  canvas.style.width = rect.width+'px';
-  canvas.style.height = rect.height+'px';
-  const ctx = canvas.getContext('2d');
-  ctx.scale(devicePixelRatio, devicePixelRatio);
-  state.canvasScale = {w:rect.width, h:rect.height};
-}
-
-function onResize(){
-  renderGrid();
-}
-
-/* draw line between centers of selected tiles and follow pointer */
-function drawLoop(){
-  const ctx = canvas.getContext('2d');
-  if(!ctx) return requestAnimationFrame(drawLoop);
-  // clear
-  ctx.clearRect(0,0, state.canvasScale.w, state.canvasScale.h);
-  if(state.selection.length>0){
-    ctx.lineWidth = 8;
-    ctx.lineCap = 'round';
-    // gradient stroke
-    const grad = ctx.createLinearGradient(0,0,state.canvasScale.w,state.canvasScale.h);
-    grad.addColorStop(0,'rgba(37,99,235,0.95)');
-    grad.addColorStop(1,'rgba(239,68,68,0.95)');
-    ctx.strokeStyle = grad;
-    ctx.beginPath();
-    for(let i=0;i<state.selection.length;i++){
-      const s = state.selection[i];
-      const center = tileCenterPos(s.r,s.c);
-      if(i===0) ctx.moveTo(center.x,center.y);
-      else ctx.lineTo(center.x,center.y);
+/* ---------- MATCH RESOLUTION & FALL ---------- */
+function processMatchesSequence(){
+  let chain = 0;
+  function step(){
+    const matches = findMatches();
+    if(matches.length===0){
+      state.combos = chain;
+      renderAll();
+      checkLevelEnd();
+      return;
     }
-    // follow pointer
-    if((inputState.isDown || state.isTouching) && inputState.lastPos){
-      const pos = inputState.lastPos;
-      const rect = gridEl.getBoundingClientRect();
-      const localX = pos.x - rect.left;
-      const localY = pos.y - rect.top;
-      if(state.selection.length>0){
-        ctx.lineTo(localX,localY);
+    chain++;
+    // mark tiles to remove, calculate score, generate special tiles if applicable
+    const toRemove = new Set();
+    let createdSpecials = []; // {r,c, kind}
+    for(const g of matches){
+      // score: base 60 per tile * chain multiplier
+      const baseScore = 60 * g.length * chain;
+      state.score += baseScore;
+      // detect if match length implies a special
+      // if 4 in a row -> striped, if >=5 -> color bomb, if L/T -> bomb
+      // detect shape by checking rows and cols counts
+      const rows = new Set(g.map(x=>x.r));
+      const cols = new Set(g.map(x=>x.c));
+      // find if it's line or L/T: if more than one row and more than one col -> L/T shape
+      if(g.length>=5){
+        // create color bomb at first tile
+        const pos = g[Math.floor(g.length/2)];
+        createdSpecials.push({r:pos.r,c:pos.c,kind:'color'});
+      } else if(rows.size===1 || cols.size===1){
+        if(g.length===4){
+          // create striped along direction
+          const pos = g[Math.floor(g.length/2)];
+          const kind = rows.size===1 ? 'stripH' : 'stripV';
+          createdSpecials.push({r:pos.r,c:pos.c,kind});
+        }
+      } else {
+        // L/T
+        const pos = g[Math.floor(g.length/2)];
+        createdSpecials.push({r:pos.r,c:pos.c,kind:'bomb'});
+      }
+      for(const p of g) toRemove.add(key(p.r,p.c));
+    }
+    // remove tiles (but don't remove if obstacle below prevents removal — here obstacles are on tile and are removed when matched beside)
+    // For simplicity: removing a tile also damages obstacle at same spot (reduces hits).
+    for(const k of toRemove){
+      const [r,c] = k.split('_').map(Number);
+      const ob = state.obstacles[k];
+      if(ob){
+        ob.hits--;
+        if(ob.hits<=0) delete state.obstacles[k];
+      }
+      state.board[r][c] = null;
+    }
+    // place created specials at their positions (if still empty)
+    for(const s of createdSpecials){
+      if(!state.board[s.r][s.c]){
+        const tile = makeTile();
+        tile.special = s.kind;
+        state.board[s.r][s.c]=tile;
       }else{
-        // small dot
-        ctx.moveTo(localX,localY);
+        // if occupied, try to insert special above if possible
+        for(let rr=s.r-1;rr>=0;rr--){
+          if(!state.board[rr][s.c]){ const tile = makeTile(); tile.special = s.kind; state.board[rr][s.c]=tile; break; }
+        }
       }
     }
-    ctx.stroke();
-    // draw end circles
-    for(let i=0;i<state.selection.length;i++){
-      const s=state.selection[i];
-      const cpos=tileCenterPos(s.r,s.c);
-      ctx.fillStyle = 'rgba(255,255,255,0.06)';
-      ctx.beginPath();
-      ctx.arc(cpos.x,cpos.y,14,0,Math.PI*2);
-      ctx.fill();
+    renderAll();
+    beep(400 + chain*40, 0.06, 0.06);
+    // after short delay, let tiles fall
+    setTimeout(()=>{ gravity(); setTimeout(step, 220); }, 220);
+  }
+  step();
+}
+
+/* gravity: for each column, collapse nulls and generate new tiles on top */
+function gravity(){
+  for(let c=0;c<COLS;c++){
+    let write = ROWS-1;
+    for(let r=ROWS-1;r>=0;r--){
+      if(state.board[r][c]){
+        if(write !== r){
+          state.board[write][c]=state.board[r][c];
+          state.board[r][c]=null;
+        }
+        write--;
+      }
+    }
+    // fill top with new tiles
+    for(let r=write;r>=0;r--){
+      state.board[r][c]=makeTile();
     }
   }
-  requestAnimationFrame(drawLoop);
+  renderAll();
 }
 
-function tileCenterPos(r,c){
-  const tileSize = state.tileSize;
-  const gap = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--tile-gap')) || 4;
-  const left = (tileSize + gap) * c + tileSize/2 + 8; // 8 padding
-  const top = (tileSize + gap) * r + tileSize/2 + 8;
-  return {x:left, y:top};
+/* ---------- ANIMATIONS (simple visual feedback) ---------- */
+function playSwapAnim(r1,c1,r2,c2){
+  // visual: briefly mark swapped tiles as selected then render
+  state.selected = {r:r2,c:c2};
+  renderAll();
+  setTimeout(()=>{ state.selected = null; renderAll(); }, 160);
 }
 
-/* =========================
-   Utilities: neighbors, random helpers already implemented
-   ========================= */
+/* ---------- INPUT (tap/drag) ---------- */
+let pointerDown = false, startCell = null;
+boardEl.addEventListener('pointerdown', (e)=>{
+  const el = e.target.closest('.cell');
+  if(!el) return;
+  const r = Number(el.dataset.r), c = Number(el.dataset.c);
+  pointerDown=true; startCell={r,c};
+});
+boardEl.addEventListener('pointerup', (e)=>{
+  pointerDown=false;
+  const el = e.target.closest('.cell');
+  if(!el) { startCell=null; return; }
+  const r = Number(el.dataset.r), c = Number(el.dataset.c);
+  if(!startCell) { startCell={r,c}; selectCell(r,c); startCell=null; return; }
+  // if same cell -> toggle selection
+  if(startCell.r===r && startCell.c===c){ selectCell(r,c); startCell=null; return; }
+  // try swap if neighbor
+  if(canSwap(startCell.r,startCell.c,r,c)){
+    // if selected tile is a special and user wants to activate with swap? (this minimal impl treats swap normally)
+    const swapped = doSwap(startCell.r,startCell.c,r,c);
+    if(!swapped){
+      // no match -> small feedback
+      beep(220,0.05,0.03);
+    }
+  }else{
+    selectCell(r,c);
+  }
+  startCell=null;
+});
+boardEl.addEventListener('click',(e)=>{
+  // for tap-select (alternate)
+  if(e.detail && e.detail>1) return;
+  const el = e.target.closest('.cell'); if(!el) return;
+  const r = Number(el.dataset.r), c = Number(el.dataset.c);
+  selectCell(r,c);
+});
 
-/* =========================
-   Level select (simple modal-like)
-   ========================= */
-function showLevelSelect(){
-  const choice = prompt('Ввести номер уровня (1..' + GameData.levels.length + ') или ОТМЕНА', String(GameData.levels[state.levelIndex].id));
-  if(choice!==null){
-    const num = parseInt(choice);
-    if(!isNaN(num) && num>=1 && num<=GameData.levels.length){
-      state.levelIndex = num-1;
-      saveProgress();
-      openLevel(state.levelIndex);
-    }else alert('Неверный уровень');
+/* selection/activation */
+function selectCell(r,c){
+  const cur = state.selected;
+  if(!cur){ state.selected={r,c}; renderAll(); return; }
+  if(cur.r===r && cur.c===c){ state.selected=null; renderAll(); return; }
+  // attempt swap
+  if(canSwap(cur.r,cur.c,r,c)){
+    const swapped = doSwap(cur.r,cur.c,r,c);
+    if(!swapped){ beep(220,0.05,0.04); state.selected=null; renderAll(); }
+  }else{
+    state.selected={r,c}; renderAll();
   }
 }
 
-/* =========================
-   Init & start
-   ========================= */
-init();
-
-/* =========================
-   Extra small helpers
-   ========================= */
-function updateScore(n){
-  state.score += n;
-  updateUI();
+/* ---------- BOOSTERS ---------- */
+document.getElementById('boosts').addEventListener('click',(e)=>{
+  const b = e.target.closest('button');
+  if(!b) return;
+  const which = b.dataset.boost;
+  if(which==='hammer'){ useBooster('hammer'); }
+  if(which==='shuffle'){ useBooster('shuffle'); }
+});
+function useBooster(name){
+  if(state.boosts[name] <= 0){ alert('Бустер недоступен'); return; }
+  if(name==='hammer'){
+    // pick random obstacle or random tile and remove
+    let targetKey = null;
+    const obKeys = Object.keys(state.obstacles);
+    if(obKeys.length>0) targetKey = obKeys[randInt(obKeys.length)];
+    else {
+      // pick random tile and remove it (simulate broken)
+      const r=randInt(ROWS), c=randInt(COLS);
+      state.board[r][c]=null;
+      gravity();
+      processMatchesSequence();
+    }
+    if(targetKey){
+      delete state.obstacles[targetKey];
+      renderAll(); beep(720,0.08,0.08);
+    }
+  }else if(name==='shuffle'){
+    // shuffle board tile types only
+    const pool=[];
+    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){ if(state.board[r][c]) pool.push(state.board[r][c].type); }
+    shuffleArray(pool);
+    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){ if(state.board[r][c]) state.board[r][c].type = pool.pop(); }
+    renderAll(); beep(520,0.06,0.06);
+  }
+  state.boosts[name] = Math.max(0, state.boosts[name]-1);
   saveProgress();
 }
 
-/* graceful unload save */
-window.addEventListener('beforeunload', ()=>saveProgress());
+/* ---------- LEVEL / PROGRESSION ---------- */
+function checkLevelEnd(){
+  const lvl = LEVELS[state.levelIndex];
+  if(lvl.type==='score'){
+    if(state.score >= lvl.target){
+      levelWin();
+      return;
+    }
+  } else if(lvl.type==='clear'){
+    // count remaining obstacles
+    const remain = Object.keys(state.obstacles).length;
+    if(remain <= 0 || state.score >= lvl.target){ levelWin(); return; }
+  }
+  if(state.movesLeft <= 0){
+    levelFail();
+  }
+}
+function levelWin(){
+  // calculate stars
+  const lvl = LEVELS[state.levelIndex];
+  let stars = 1;
+  const ratio = state.score / lvl.target;
+  if(ratio >= 1.6) stars = 3;
+  else if(ratio >= 1.1) stars = 2;
+  state.levelProgress[state.levelIndex] = Math.max(state.levelProgress[state.levelIndex]||0, stars);
+  showModal('Уровень пройден!', `<p>Вы получили ${stars} ⭐</p><p>Очки: ${state.score}</p>`, ()=>{ state.levelIndex = Math.min(LEVELS.length-1, state.levelIndex+1); initBoard(state.levelIndex); saveProgress(); closeModal(); });
+  beep(880,0.18,0.12);
+}
+function levelFail(){
+  state.lives = Math.max(0, state.lives - 1);
+  saveProgress();
+  if(state.lives <= 0){
+    showModal('Игра окончена', `<p>У вас закончились жизни. Прогресс сохранён.</p><p>Очки: ${state.score}</p>`, ()=>{ state.lives = START_LIVES; state.levelIndex = 0; initBoard(state.levelIndex); saveProgress(); closeModal(); });
+  }else{
+    showModal('Провал', `<p>Уровень не пройден. Потрачена жизнь.</p>`, ()=>{ initBoard(state.levelIndex); closeModal(); });
+  }
+  beep(160,0.18,0.06);
+}
+
+/* ---------- UI: menu/modal/pause ---------- */
+const overlay = document.getElementById('overlay'), modalContent = document.getElementById('modalContent');
+function showModal(title, html, onOk){
+  modalContent.innerHTML = `<h2>${title}</h2>${html}<div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn" id="modalOk">ОК</button></div>`;
+  overlay.classList.add('show');
+  const ok = document.getElementById('modalOk');
+  ok.focus();
+  ok.onclick = ()=>{ if(onOk) onOk(); else closeModal(); };
+}
+function closeModal(){ overlay.classList.remove('show'); modalContent.innerHTML=''; }
+
+/* menu */
+document.getElementById('menuBtn').addEventListener('click', ()=>{
+  showModal('Меню', `<p class="smalltext">Уровень ${state.levelIndex+1} — ${LEVELS[state.levelIndex].name}</p>
+  <p><button class="btn" id="menuRestart">Перезапустить уровень</button> <button class="btn" id="menuMain">В главное меню</button></p>
+  <p class="smalltext">Бустеры: молоток ${state.boosts.hammer}, перемешать ${state.boosts.shuffle}</p>`, ()=>{
+    // default OK closes
+    closeModal();
+  });
+  setTimeout(()=>{ document.getElementById('menuRestart').onclick = ()=>{ initBoard(state.levelIndex); closeModal(); }; document.getElementById('menuMain').onclick = ()=>{ state.levelIndex = 0; initBoard(0); closeModal(); }; }, 10);
+});
+
+/* restart/pause/sound */
+document.getElementById('restartBtn').addEventListener('click', ()=>{ if(confirm('Перезапустить уровень?')) initBoard(state.levelIndex); });
+document.getElementById('pauseBtn').addEventListener('click', ()=>{ showModal('Пауза', `<p>Игра на паузе</p><p><button class="btn" id="resumeBtn">Продолжить</button></p>`, ()=>{closeModal()}); setTimeout(()=>{ document.getElementById('resumeBtn').onclick = ()=>{ closeModal(); }; },10); });
+document.getElementById('soundToggle').addEventListener('click', ()=>{
+  state.soundOn = !state.soundOn;
+  document.getElementById('soundToggle').textContent = state.soundOn ? '🔊' : '🔇';
+  saveProgress();
+});
+
+/* overlay click to close */
+overlay.addEventListener('click',(e)=>{ if(e.target===overlay) closeModal(); });
+
+/* ---------- INITIALIZE ---------- */
+loadProgress();
+initBoard(state.levelIndex);
+
+/* autosave */
+setInterval(()=>{ saveProgress(); }, 5000);
+
+/* quick testing helpers (dev) */
+// expose some functions to window for debugging in dev tools (optional)
+window._m3 = {state, LEVELS, initBoard, saveProgress, loadProgress};
 
 </script>
 </body>
