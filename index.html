@@ -1,113 +1,71 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>Match-3: Кристальная долина</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Match-3: Кристальная долина — Food Edition</title>
 <style>
-  :root{
-    --bg1: linear-gradient(180deg,#0f1724,#071028);
-    --panel:#0b1220cc;
-    --accent:#ff6b6b;
-    --glass:#ffffff22;
-    --tile-size:calc((min(480px,100vw)-40px)/8);
-    --safe-area-bottom: env(safe-area-inset-bottom, 8px);
-    --font-sans: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
-  }
-  html,body{height:100%;margin:0;font-family:var(--font-sans);background:var(--bg1);color:#e6eef8;-webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;}
-  .app{max-width:480px;margin:12px auto;padding:12px;box-sizing:border-box;}
-  header{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:8px;}
-  .title{font-weight:700;font-size:18px;display:flex;flex-direction:column;line-height:1;}
-  .subtitle{font-size:12px;color:#a7c0df}
-  .top-controls{display:flex;gap:8px;align-items:center;}
-  .btn{background:var(--panel);border-radius:10px;padding:8px 10px;font-size:13px;border:1px solid rgba(255,255,255,0.03);cursor:pointer;color:#eaf6ff}
-  .btn.small{padding:6px 8px;font-size:12px;border-radius:8px}
-  .hud{display:flex;gap:8px;align-items:center;margin-bottom:8px}
-  .panel{background:var(--panel);border-radius:12px;padding:10px;box-shadow:0 6px 18px rgba(0,0,0,0.45);backdrop-filter: blur(6px);}
-  .score{font-weight:700;font-size:20px}
-  .meta{font-size:12px;color:#9fb9db}
-  .board-wrap{display:flex;gap:12px;align-items:flex-start;flex-direction:row;justify-content:center;}
-  .board{width:calc(var(--tile-size)*8);height:calc(var(--tile-size)*8);display:grid;grid-template-columns:repeat(8,1fr);grid-auto-rows:var(--tile-size);gap:6px;padding:6px;background:linear-gradient(180deg,#082033,#052033);border-radius:12px;box-shadow:inset 0 2px 8px #0005;}
-  .cell{position:relative;width:100%;height:100%;border-radius:8px;overflow:visible;touch-action:none}
-  .tile{position:absolute;left:0;top:0;right:0;bottom:0;margin:auto;display:flex;align-items:center;justify-content:center;border-radius:8px;user-select:none;cursor:pointer;transition:transform 180ms cubic-bezier(.2,.9,.2,1), opacity 180ms;}
-  .tile .gem{width:76%;height:76%;border-radius:8px;box-shadow:inset 0 6px 12px rgba(255,255,255,0.06), 0 6px 14px rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;text-shadow:0 1px 0 rgba(0,0,0,0.6)}
-  /* gem colors */
-  .gem.g1{background:linear-gradient(180deg,#ff5b5b,#c73a3a)}
-  .gem.g2{background:linear-gradient(180deg,#4f9dff,#2a6fc7)}
-  .gem.g3{background:linear-gradient(180deg,#49d46f,#1b9a4a)}
-  .gem.g4{background:linear-gradient(180deg,#cd7cff,#8d3fbf)}
-  .gem.g5{background:linear-gradient(180deg,#ffd36b,#d08a2c)}
-  .gem.g6{background:linear-gradient(180deg,#d6f7ff,#7fd7ea);color:#08464f}
-  /* special markers */
-  .tile .mark{position:absolute;right:4px;top:4px;font-size:11px;padding:2px 5px;border-radius:6px;background:#0006}
-  .tile.selected{transform:scale(1.06) rotate(-2deg);z-index:5;box-shadow:0 10px 30px rgba(0,0,0,0.6)}
-  .tile.removing{opacity:0;transform:scale(.6) rotate(8deg)}
-  .obstacle{position:absolute;left:8%;top:8%;width:84%;height:84%;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;background:rgba(0,0,0,0.32);color:#fff;padding:4px;text-align:center}
-  .ice{background:linear-gradient(180deg,#dff6ff44,#9ddbf444);border:2px solid rgba(255,255,255,0.06);box-shadow:inset 0 4px 8px rgba(255,255,255,0.06)}
-  .crate{background:linear-gradient(180deg,#7a4b2b,#5a341f);box-shadow:inset 0 6px 8px rgba(0,0,0,0.3)}
-  .controls{display:flex;flex-direction:column;gap:8px;}
-  .side-panel{min-width:140px;display:flex;flex-direction:column;gap:8px}
-  .goal{font-size:13px}
-  .bottom-nav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--safe-area-bottom) + 8px);width:calc(min(480px,100vw) - 24px);display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:24px;background:linear-gradient(180deg,#082135,#021122);box-shadow:0 10px 30px rgba(0,0,0,0.6)}
-  .nav-btn{background:transparent;border:none;color:#cfeaff;font-weight:600;padding:8px 10px;border-radius:18px;cursor:pointer}
-  .smalltext{font-size:12px;color:#9fb9db}
-  .row{display:flex;gap:8px;align-items:center}
-  .stars{display:flex;gap:4px}
-  .star{width:18px;height:18px;background:linear-gradient(180deg,#fff69a,#ffb84f);border-radius:4px;box-shadow:0 2px 6px rgba(0,0,0,0.4)}
-  .overlay{position:fixed;left:0;top:0;width:100%;height:100%;display:none;align-items:center;justify-content:center;padding:20px;box-sizing:border-box}
-  .overlay.show{display:flex}
-  .modal{background:#07142a;color:#e6f6ff;padding:16px;border-radius:12px;max-width:420px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,0.6)}
-  .modal h2{margin:0 0 8px;font-size:18px}
-  .modal p{margin:8px 0}
-  .level-badge{font-size:13px;padding:6px 8px;border-radius:10px;background:#031826;color:#bfe6ff}
-  footer{color:#9fb9db;font-size:12px;text-align:center;margin-top:12px}
-  @media (max-width:520px){
-    :root{--tile-size:calc((100vw - 34px)/8)}
-    .app{padding:8px;margin:8px}
-  }
+:root{
+  --tile-size:calc((min(480px,100vw)-40px)/8);
+  --gap:6px;
+  --panel:rgba(6,18,32,0.72);
+  --glass:#ffffff12;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:var(--font);background:linear-gradient(180deg,#071029,#021018);color:#e6f7ff}
+.app{max-width:480px;margin:12px auto;padding:12px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.title{font-weight:700}
+.subtitle{font-size:12px;color:#9fbfe2}
+.panel{background:var(--panel);padding:10px;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,0.45)}
+.hud{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.score{font-weight:700;font-size:20px}
+.board-wrap{display:flex;justify-content:center}
+.board{width:calc(var(--tile-size)*8 + var(--gap)*9);padding:var(--gap);background:linear-gradient(180deg,#083243,#042833);border-radius:12px;display:grid;grid-template-columns:repeat(8, var(--tile-size));grid-auto-rows:var(--tile-size);gap:var(--gap);position:relative}
+.cell{position:relative;width:100%;height:100%;background:transparent;border-radius:8px;overflow:visible;touch-action:none}
+.tile{position:absolute;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;border-radius:10px;user-select:none;transition:transform 220ms cubic-bezier(.2,.9,.2,1), opacity 220ms, box-shadow 180ms; font-size:calc(var(--tile-size) * 0.56); will-change:transform,opacity}
+.tile .emoji{display:inline-block;transform:translateY(2%)} 
+.tile.selected{transform:scale(1.08);box-shadow:0 12px 28px rgba(0,0,0,0.6)}
+.tile.anim-move{transition:transform 260ms cubic-bezier(.2,.9,.2,1)}
+.tile.removing{transition:transform 220ms ease, opacity 220ms ease; transform:scale(0.4) rotate(-10deg); opacity:0}
+.obstacle{position:absolute;left:8%;top:8%;width:84%;height:84%;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;background:rgba(0,0,0,0.38);color:#fff;padding:4px;text-align:center}
+.ice{background:linear-gradient(180deg,#eaf8ff66,#c7f0ff33);border:1px solid rgba(255,255,255,0.06)}
+.crate{background:linear-gradient(180deg,#6b4a2b,#4a2f1b)}
+.controls{display:flex;gap:8px;align-items:center}
+.btn{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px 10px;border-radius:10px;color:#dff4ff;cursor:pointer}
+.bottom{position:fixed;left:50%;transform:translateX(-50%);bottom:12px;padding:8px 12px;border-radius:20px;background:linear-gradient(180deg,#02131a,#041f2a);box-shadow:0 12px 30px rgba(0,0,0,0.6)}
+.modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:#071228;padding:16px;border-radius:12px;display:none;z-index:999}
+.modal.show{display:block}
+.small{font-size:12px;color:#9fbfe2}
+.star{width:16px;height:16px;background:linear-gradient(180deg,#fff69a,#ffb84f);border-radius:3px;display:inline-block;margin:0 3px}
+@media (max-width:520px){
+  :root{--tile-size:calc((100vw - 34px)/8)}
+  .app{padding:8px}
+}
 </style>
 </head>
 <body>
 <div class="app">
-  <header>
-    <div class="title">
-      <div>Match-3: Кристальная долина</div>
-      <div class="subtitle">Яркие кристаллы, уровни и комбо</div>
+  <div class="header">
+    <div>
+      <div class="title">Match-3: Кристальная долина — Food Edition</div>
+      <div class="subtitle small">Tap → Tap to move. Swap only if match; otherwise swap+revert.</div>
     </div>
-    <div class="top-controls">
-      <div class="level-badge panel" id="levelBadge">Уровень 1</div>
-      <button class="btn small" id="soundToggle">🔊</button>
-      <button class="btn small" id="menuBtn">☰</button>
+    <div class="controls">
+      <div class="panel small" id="levelBadge">Уровень 1</div>
+      <button class="btn" id="restart">↺</button>
     </div>
-  </header>
+  </div>
 
-  <div class="hud">
-    <div class="panel" style="flex:1">
-      <div class="row" style="justify-content:space-between">
-        <div>
-          <div class="score" id="score">0</div>
-          <div class="smalltext">Очки</div>
-        </div>
-        <div style="text-align:right">
-          <div class="meta" id="movesOrTimer">Ходы: 30</div>
-          <div class="smalltext" id="goalText">Цель: 10000 очков</div>
-        </div>
-      </div>
+  <div class="hud panel" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <div>
+      <div class="score" id="score">0</div>
+      <div class="small">Очки</div>
     </div>
-
-    <div class="panel side-panel">
-      <div class="goal"><strong>Цель</strong><div id="goalList">Набрать 10000 очков</div></div>
-      <div class="row">
-        <div class="smalltext">Жизни</div>
-        <div id="lives" style="margin-left:auto">❤❤❤❤❤</div>
-      </div>
-      <div class="row">
-        <div class="smalltext">Бустеры</div>
-        <div style="margin-left:auto" id="boosts">
-          <button class="btn small" data-boost="hammer">Молот</button>
-          <button class="btn small" data-boost="shuffle">Перемешать</button>
-        </div>
-      </div>
+    <div style="text-align:right">
+      <div class="small" id="moves">Ходы: 30</div>
+      <div class="small" id="goal">Цель: 8000</div>
     </div>
   </div>
 
@@ -115,232 +73,139 @@
     <div class="board panel" id="board"></div>
   </div>
 
-  <div class="bottom-nav" role="navigation">
-    <div style="display:flex;gap:8px;align-items:center">
-      <button class="nav-btn" id="restartBtn">↺ Перезапустить</button>
-      <button class="nav-btn" id="pauseBtn">⏸ Пауза</button>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <div class="smalltext">Уровень <span id="levelNum">1</span></div>
-      <div class="stars" id="starBox">
-        <div class="star" style="opacity:.15"></div>
-        <div class="star" style="opacity:.15"></div>
-        <div class="star" style="opacity:.15"></div>
-      </div>
+  <div style="height:90px"></div>
+
+  <div class="bottom panel bottom" id="bottomBar">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+      <div class="small">Уровень <span id="levelNum">1</span></div>
+      <div class="small">Звезды: <span id="stars"><span class="star" style="opacity:.15"></span><span class="star" style="opacity:.15"></span><span class="star" style="opacity:.15"></span></span></div>
+      <div class="small">Жизни: <span id="lives">❤❤❤❤❤</span></div>
     </div>
   </div>
 
-  <footer>Сохранение прогресса: локально. Версия мини-демо.</footer>
-</div>
-
-<!-- Overlays -->
-<div class="overlay" id="overlay">
-  <div class="modal" id="modalContent"></div>
+  <div class="modal" id="modal"></div>
 </div>
 
 <script>
-/* Match-3: Кристальная долина — single-file implementation.
-   Features included (minimal, functional):
-   - 8x8 grid, 6 gem types
-   - swap by tap or drag
-   - matches resolved, tiles fall down, new tiles spawn
-   - combos and scoring, chain multiplier
-   - special tiles: striped (row/col), bomb (radius), color-bomb
-   - obstacles: crate (1 hit), ice (needs break)
-   - levels with targets (points / clear obstacles)
-   - stars (1-3), lives, boosters (hammer/shuffle), pause/restart
-   - progress saved to localStorage
-   - simple WebAudio feedback (toggleable)
+/* Single-file match-3 with:
+ - select by tap (tile enlarges)
+ - second tap swaps (only if adjacent)
+ - swap animation; if no match => swap back animation
+ - destroy animation (scale + fade)
+ - emojis used: 🍎🍓🍇🥐🥦🧀🍕
+ - core match/destroy/gravity logic
 */
 
-/* ---------- CONFIG ---------- */
+// CONFIG
 const ROWS = 8, COLS = 8;
-const GEM_TYPES = 6;
-const TILE_GAP = 6;
-const START_LIVES = 5;
-
-/* Level data (demo set). Each level: {type:'score'|'clear', target: number, moves: number, obstacles:Array of {r,c,type,hits}} */
+const EMOJIS = ['🍎','🍓','🍇','🥐','🥦','🧀','🍕']; // from user
+const TYPES = EMOJIS.length;
 const LEVELS = [
-  {type:'score', target:8000, moves:30, name:'Лесная поляна', obstacles:[]},
-  {type:'score', target:12000, moves:28, name:'Ледяная пещера', obstacles:[
-    // ice in some positions
-    {r:2,c:3,type:'ice',hits:1},{r:2,c:4,type:'ice',hits:1},{r:3,c:4,type:'ice',hits:1},
-  ]},
-  {type:'clear', target:8, moves:32, name:'Вулканическое ущелье', obstacles:[
-    {r:4,c:4,type:'crate',hits:2},{r:5,c:3,type:'crate',hits:2}
-  ]},
-  {type:'score', target:18000, moves:25, name:'Сверкающие пещеры', obstacles:[]},
-  {type:'score', target:24000, moves:22, name:'Затерянный оазис', obstacles:[
-    {r:1,c:1,type:'ice',hits:1},{r:1,c:2,type:'crate',hits:2}
-  ]},
-  // later levels repeat pattern — more can be added externally
+  {type:'score', target:8000, moves:30, name:'Лесная поляна'},
+  {type:'score', target:12000, moves:28, name:'Ледяная пещера'}
 ];
+const STORAGE_KEY = 'match3_food_save_v1';
 
-const STORAGE_KEY = 'match3_save_v1';
-
-/* ---------- STATE ---------- */
+// STATE
 let state = {
-  levelIndex: 0,
+  level: 0,
   score: 0,
-  lives: START_LIVES,
-  levelProgress: {}, // stars per level
-  board: [], // matrix of tile objects
-  obstacles: {}, // key "r_c" => obstacle data
-  movesLeft: 0,
-  running: true,
+  moves: 0,
+  board: [],
   selected: null,
-  combos: 0,
-  soundOn: true,
-  boosts: {hammer:1,shuffle:1},
-  lastSave: Date.now()
+  obstacles: {}, // e.g. "r_c": {type:'ice'|'crate', hits}
+  running: true,
+  lives: 5,
+  levelProgress: {}
 };
 
-/* ---------- AUDIO ---------- */
-let audioCtx;
-function ensureAudio(){
-  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-}
-function beep(freq=440,dur=0.06,vol=0.06){
-  if(!state.soundOn) return;
-  ensureAudio();
-  const o = audioCtx.createOscillator();
-  const g = audioCtx.createGain();
-  o.type='sine'; o.frequency.value = freq;
-  g.gain.value = vol;
-  o.connect(g); g.connect(audioCtx.destination);
-  o.start(); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
-  setTimeout(()=>o.stop(), dur*1000 + 30);
-}
-
-/* ---------- UTIL ---------- */
+// UTILS
+const boardEl = document.getElementById('board');
 function key(r,c){return r+'_'+c}
-function randInt(n){return Math.floor(Math.random()*n)}
-function shuffleArray(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a;}
+function rand(n){return Math.floor(Math.random()*n)}
+function cloneBoard(b){ return b.map(row => row.map(cell => cell ? {...cell} : null)); }
 
-/* ---------- SAVE / LOAD ---------- */
-function saveProgress(){
+// SAVE/LOAD
+function save(){
   try{
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      levelIndex: state.levelIndex,
-      score: state.score,
-      lives: state.lives,
-      levelProgress: state.levelProgress,
-      boosts: state.boosts,
-      lastSave: Date.now()
-    }));
-    state.lastSave = Date.now();
-    //console.log('saved');
-  }catch(e){console.warn('save failed',e)}
+    const payload = {
+      level: state.level, score: state.score, lives: state.lives, moves: state.moves, progress: state.levelProgress
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  }catch(e){}
 }
-function loadProgress(){
+function load(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
-    if(raw){const o = JSON.parse(raw); if(o){ state.levelIndex = o.levelIndex||0; state.score = o.score||0; state.lives = o.lives||START_LIVES; state.levelProgress = o.levelProgress||{}; state.boosts = o.boosts||state.boosts; }}
-  }catch(e){console.warn('load failed', e)}
+    if(raw){
+      const o = JSON.parse(raw);
+      state.level = o.level||0; state.score = o.score||0; state.lives = o.lives||5; state.levelProgress = o.progress||{};
+    }
+  }catch(e){}
 }
 
-/* ---------- BOARD / TILES ---------- */
-/* Tile format:
- {type: 0..GEM_TYPES-1, special: null|'stripH'|'stripV'|'bomb'|'color', id:unique}
- Obstacles stored separately with keys r_c -> {type:'ice'|'crate', hits:int}
-*/
-let uidCounter=1;
-function makeTile(type=null){
-  return {type: type===null?randInt(GEM_TYPES):type, special:null, id:uidCounter++};
-}
+/* TILE: {type:0..TYPES-1, id:number} */
+let uid=1;
+function makeTile(t=null){ return {type: t===null ? rand(TYPES) : t, id: uid++}; }
 
-/* Initialize board with no immediate matches */
+// INIT BOARD without immediate matches
 function initBoard(levelIdx){
   state.board = Array.from({length:ROWS},()=>Array(COLS).fill(null));
-  // place obstacles
-  state.obstacles = {};
   const lvl = LEVELS[levelIdx];
-  if(lvl && lvl.obstacles) for(const ob of lvl.obstacles) state.obstacles[key(ob.r,ob.c)] = {type:ob.type,hits:ob.hits||1};
+  state.moves = lvl.moves;
+  state.score = 0;
+  state.selected = null;
+  state.obstacles = {}; // demo: none
   // fill ensuring no immediate matches
   for(let r=0;r<ROWS;r++){
     for(let c=0;c<COLS;c++){
-      let tries=0, t;
+      let tries=0;
       do{
-        t = makeTile();
-        state.board[r][c] = t;
+        state.board[r][c] = makeTile();
         tries++;
         if(tries>50) break;
-      } while(checkImmediateMatchAt(r,c));
+      } while(immediateMatchAt(r,c));
     }
   }
-  state.movesLeft = lvl.moves;
-  state.score=0;
-  state.combos=0;
-  state.selected = null;
-  renderAll();
+  render();
+  save();
 }
-
-/* returns true if placing tile at r,c causes immediate match */
-function checkImmediateMatchAt(r,c){
+function immediateMatchAt(r,c){
   const t = state.board[r][c];
   if(!t) return false;
   const v = t.type;
-  // horizontal
-  let count=1;
-  if(c-1>=0 && state.board[r][c-1] && state.board[r][c-1].type===v) count++;
-  if(c-2>=0 && state.board[r][c-2] && state.board[r][c-2].type===v) count++;
-  if(count>=3) return true;
-  // vertical
-  count=1;
-  if(r-1>=0 && state.board[r-1][c] && state.board[r-1][c].type===v) count++;
-  if(r-2>=0 && state.board[r-2][c] && state.board[r-2][c].type===v) count++;
-  return count>=3;
+  // check left-left and left
+  if(c-1>=0 && c-2>=0 && state.board[r][c-1] && state.board[r][c-2] && state.board[r][c-1].type===v && state.board[r][c-2].type===v) return true;
+  if(r-1>=0 && r-2>=0 && state.board[r-1][c] && state.board[r-2][c] && state.board[r-1][c].type===v && state.board[r-2][c].type===v) return true;
+  return false;
 }
 
-/* ---------- RENDER ---------- */
-const boardEl = document.getElementById('board');
-function renderAll(){
+// RENDER: create cells and tiles as absolutely positioned elements inside each cell
+function render(){
   document.getElementById('score').textContent = state.score;
-  document.getElementById('levelNum').textContent = state.levelIndex + 1;
-  document.getElementById('levelBadge').textContent = `Уровень ${state.levelIndex+1}: ${LEVELS[state.levelIndex].name || ''}`;
-  document.getElementById('movesOrTimer').textContent = `Ходы: ${state.movesLeft}`;
-  const gtxt = LEVELS[state.levelIndex].type === 'score' ? `Набрать ${LEVELS[state.levelIndex].target}` : `Уничтожить: ${LEVELS[state.levelIndex].target}`;
-  document.getElementById('goalList').textContent = gtxt;
-  document.getElementById('goalText').textContent = `Цель: ${gtxt}`;
-  document.getElementById('lives').textContent = '❤'.repeat(Math.max(0, state.lives));
-
-  // stars
-  const stars = document.getElementById('starBox').children;
-  const sc = state.levelProgress[state.levelIndex] || 0;
-  for(let i=0;i<3;i++) stars[i].style.opacity = i<sc ? '1' : '.15';
-
-  // render grid
+  document.getElementById('moves').textContent = 'Ходы: ' + state.moves;
+  document.getElementById('levelNum').textContent = state.level + 1;
+  document.getElementById('levelBadge').textContent = `Уровень ${state.level+1}: ${LEVELS[state.level].name}`;
+  document.getElementById('goal').textContent = 'Цель: ' + LEVELS[state.level].target;
+  document.getElementById('lives').textContent = '❤'.repeat(state.lives);
+  // board DOM
   boardEl.innerHTML = '';
   for(let r=0;r<ROWS;r++){
     for(let c=0;c<COLS;c++){
-      const cell = document.createElement('div');
-      cell.className='cell';
-      cell.dataset.r=r; cell.dataset.c=c;
+      const cell = document.createElement('div'); cell.className='cell'; cell.dataset.r=r; cell.dataset.c=c;
       const tile = state.board[r][c];
       if(tile){
         const tdiv = document.createElement('div');
-        tdiv.className = 'tile';
-        tdiv.dataset.id = tile.id;
-        tdiv.dataset.r = r; tdiv.dataset.c = c;
+        tdiv.className='tile';
+        tdiv.dataset.r = r; tdiv.dataset.c = c; tdiv.dataset.id = tile.id;
+        // emoji
+        const em = document.createElement('div'); em.className='emoji'; em.textContent = EMOJIS[tile.type];
+        tdiv.appendChild(em);
         if(state.selected && state.selected.r==r && state.selected.c==c) tdiv.classList.add('selected');
-        // inner gem
-        const gem = document.createElement('div');
-        gem.className = 'gem g'+(tile.type+1);
-        gem.textContent = tile.special==='color'?'★': '';
-        if(tile.special === 'stripH' || tile.special === 'stripV' || tile.special==='bomb'){
-          const mark = document.createElement('div'); mark.className='mark'; 
-          mark.textContent = tile.special==='stripH'?'━':(tile.special==='stripV'?'┃': (tile.special==='bomb'?'✶':'')); 
-          tdiv.appendChild(mark);
-        }else if(tile.special==='color'){
-          const mark = document.createElement('div'); mark.className='mark'; mark.textContent='✦'; tdiv.appendChild(mark);
-        }
-        tdiv.appendChild(gem);
-        // obstacles overlay
+        // obstacle overlay if any
         const ob = state.obstacles[key(r,c)];
         if(ob){
-          const oel = document.createElement('div'); oel.className='obstacle';
-          oel.textContent = ob.type==='ice' ? `Лёд (${ob.hits})` : `Ящик (${ob.hits})`;
-          oel.classList.add(ob.type==='ice'?'ice':'crate');
+          const oel = document.createElement('div'); oel.className='obstacle ' + (ob.type==='ice'?'ice':'crate'); oel.textContent = ob.type==='ice'?`Лёд (${ob.hits})`:`Ящик (${ob.hits})`;
           tdiv.appendChild(oel);
         }
         cell.appendChild(tdiv);
@@ -350,25 +215,23 @@ function renderAll(){
   }
 }
 
-/* ---------- MATCH DETECTION ---------- */
-function findMatches(){
-  const matches = []; // array of arrays of {r,c}
+// MATCH DETECTION
+function findMatches(mat){
+  const board = mat || state.board;
+  const groups = [];
   const used = Array.from({length:ROWS},()=>Array(COLS).fill(false));
   // horizontal
   for(let r=0;r<ROWS;r++){
     let c=0;
     while(c<COLS){
-      const t = state.board[r][c];
+      const t = board[r][c];
       if(!t){ c++; continue; }
       let len=1; const v=t.type;
-      for(let k=c+1;k<COLS;k++){
-        const nt = state.board[r][k];
-        if(nt && nt.type===v) len++; else break;
-      }
+      for(let k=c+1;k<COLS;k++){ const nt = board[r][k]; if(nt && nt.type===v) len++; else break; }
       if(len>=3){
-        const arr=[];
-        for(let k=c;k<c+len;k++){ arr.push({r,col:k}); used[r][k]=true; }
-        matches.push(arr);
+        const group = [];
+        for(let k=c;k<c+len;k++) group.push({r,c:k});
+        groups.push(group);
       }
       c+=Math.max(1,len);
     }
@@ -377,355 +240,249 @@ function findMatches(){
   for(let c=0;c<COLS;c++){
     let r=0;
     while(r<ROWS){
-      const t = state.board[r][c];
+      const t = board[r][c];
       if(!t){ r++; continue; }
       let len=1; const v=t.type;
-      for(let k=r+1;k<ROWS;k++){
-        const nt = state.board[k][c];
-        if(nt && nt.type===v) len++; else break;
-      }
+      for(let k=r+1;k<ROWS;k++){ const nt = board[k][c]; if(nt && nt.type===v) len++; else break; }
       if(len>=3){
-        const arr=[];
-        for(let k=r;k<r+len;k++){ arr.push({r:k,col:c}); used[k][c]=true; }
-        matches.push(arr);
+        const group = [];
+        for(let k=r;k<r+len;k++) group.push({r:k,c});
+        groups.push(group);
       }
       r+=Math.max(1,len);
     }
   }
-  // merge overlapping groups into bigger ones
-  // naive merge: create map and union groups that share a cell
-  const groups = [];
-  for(const m of matches){
-    // convert to key set
-    const set = new Set(m.map(x=>key(x.r,x.col)));
-    groups.push(set);
-  }
-  let merged=true;
-  while(merged){
-    merged=false;
-    for(let i=0;i<groups.length;i++){
-      for(let j=i+1;j<groups.length;j++){
-        for(const kcell of groups[j]){
-          if(groups[i].has(kcell)){
-            // merge j into i
-            for(const el of groups[j]) groups[i].add(el);
-            groups.splice(j,1);
-            merged=true; break;
-          }
-        }
-        if(merged) break;
+  // merge overlapping groups
+  const merged = [];
+  for(const g of groups){
+    const set = new Set(g.map(p=>key(p.r,p.c)));
+    let mergedInto = -1;
+    for(let i=0;i<merged.length;i++){
+      for(const s of merged[i]){
+        if(set.has(s)){ mergedInto = i; break; }
       }
-      if(merged) break;
+      if(mergedInto>=0) break;
+    }
+    if(mergedInto>=0){
+      for(const s of set) merged[mergedInto].add(s);
+    } else {
+      merged.push(set);
     }
   }
-  // convert to arrays of positions
-  return groups.map(s=>[...s].map(k=>{const [r,c]=k.split('_').map(Number); return {r,c};}));
+  return merged.map(s=>[...s].map(k=>{const [r,c]=k.split('_').map(Number);return {r,c};}));
 }
 
-/* ---------- SWAP ---------- */
-function canSwap(r1,c1,r2,c2){
-  if(r1<0||r1>=ROWS||r2<0||r2>=ROWS||c1<0||c1>=COLS||c2<0||c2>=COLS) return false;
-  const dr = Math.abs(r1-r2), dc=Math.abs(c1-c2);
-  return (dr+dc)===1;
+// SWAP LOGIC with animation and revert if no match
+let animating = false;
+function canSwap(r1,c1,r2,c2){ const dr=Math.abs(r1-r2), dc=Math.abs(c1-c2); return (dr+dc)===1; }
+
+function getTileElement(r,c){
+  return boardEl.querySelector('.tile[data-r="'+r+'"][data-c="'+c+'"]');
 }
 
-/* Perform swap and check if it creates a match; returns true if swap resulted in any match */
-function doSwap(r1,c1,r2,c2,force=false){
-  if(!canSwap(r1,c1,r2,c2)) return false;
-  const a = state.board[r1][c1], b=state.board[r2][c2];
-  if(!a || !b) return false;
-  // swap
-  state.board[r1][c1]=b; state.board[r2][c2]=a;
-  // if forced (power activation), accept regardless
-  const matches = findMatches();
-  if(matches.length>0 || force){
-    playSwapAnim(r1,c1,r2,c2);
-    state.movesLeft--;
-    processMatchesSequence();
-    return true;
+function animateSwap(r1,c1,r2,c2, onEnd){
+  const aEl = getTileElement(r1,c1);
+  const bEl = getTileElement(r2,c2);
+  if(!aEl || !bEl){ onEnd && onEnd(); return; }
+  const aRect = aEl.getBoundingClientRect();
+  const bRect = bEl.getBoundingClientRect();
+  const dx = bRect.left - aRect.left;
+  const dy = bRect.top - aRect.top;
+  // apply transforms
+  aEl.classList.add('anim-move');
+  bEl.classList.add('anim-move');
+  aEl.style.transform = `translate(${dx}px, ${dy}px)`;
+  bEl.style.transform = `translate(${-dx}px, ${-dy}px)`;
+  animating = true;
+  setTimeout(()=>{ // after animation
+    // clear transforms (we will re-render after state swap)
+    aEl.style.transform = '';
+    bEl.style.transform = '';
+    aEl.classList.remove('anim-move');
+    bEl.classList.remove('anim-move');
+    animating = false;
+    onEnd && onEnd();
+  }, 260);
+}
+
+function performSwapWithCheck(r1,c1,r2,c2){
+  if(animating) return;
+  if(!canSwap(r1,c1,r2,c2)) { selectCell(r2,c2); return; }
+  const before = cloneBoard(state.board);
+  // animate swap visually, then swap state
+  animateSwap(r1,c1,r2,c2, ()=>{
+    // swap in state
+    const tmp = state.board[r1][c1];
+    state.board[r1][c1] = state.board[r2][c2];
+    state.board[r2][c2] = tmp;
+    // update tile dataset positions for DOM correctness: we will simply re-render
+    render();
+    // check matches
+    const matches = findMatches();
+    if(matches.length>0){
+      state.moves--;
+      save();
+      // handle matches sequence
+      processMatchesSequence();
+    } else {
+      // no matches: visual swap already happened; now show revert: animate swap back THEN revert state
+      setTimeout(()=>{
+        // animate swap back elements currently at those positions (rendered)
+        animateSwap(r2,c2,r1,c1, ()=>{
+          // revert state back
+          const t = state.board[r1][c1];
+          state.board[r1][c1] = state.board[r2][c2];
+          state.board[r2][c2] = t;
+          render();
+          // small negative audio feedback
+        });
+      }, 200);
+    }
+  });
+}
+
+// SELECTION HANDLING: tap first -> selected; tap second -> attempt swap (only adjacent)
+function selectCell(r,c){
+  if(animating) return;
+  const tile = state.board[r][c];
+  if(!tile) return;
+  if(!state.selected){
+    state.selected = {r,c};
+    render();
+    return;
+  }
+  // if tapped same -> deselect
+  if(state.selected.r===r && state.selected.c===c){ state.selected=null; render(); return; }
+  // attempt swap only if neighbors
+  if(canSwap(state.selected.r,state.selected.c,r,c)){
+    performSwapWithCheck(state.selected.r,state.selected.c,r,c);
+    state.selected=null;
+    render();
   }else{
-    // revert with small animation
-    setTimeout(()=>{ state.board[r1][c1]=a; state.board[r2][c2]=b; renderAll(); }, 160);
-    return false;
+    // select new cell
+    state.selected = {r,c};
+    render();
   }
 }
 
-/* ---------- MATCH RESOLUTION & FALL ---------- */
+// MATCH PROCESSING: remove matches, add score, gravity, spawn new, chain combos
 function processMatchesSequence(){
   let chain = 0;
   function step(){
     const matches = findMatches();
-    if(matches.length===0){
-      state.combos = chain;
-      renderAll();
-      checkLevelEnd();
-      return;
-    }
+    if(matches.length===0){ render(); checkLevelEnd(); return; }
     chain++;
-    // mark tiles to remove, calculate score, generate special tiles if applicable
-    const toRemove = new Set();
-    let createdSpecials = []; // {r,c, kind}
-    for(const g of matches){
-      // score: base 60 per tile * chain multiplier
-      const baseScore = 60 * g.length * chain;
-      state.score += baseScore;
-      // detect if match length implies a special
-      // if 4 in a row -> striped, if >=5 -> color bomb, if L/T -> bomb
-      // detect shape by checking rows and cols counts
-      const rows = new Set(g.map(x=>x.r));
-      const cols = new Set(g.map(x=>x.c));
-      // find if it's line or L/T: if more than one row and more than one col -> L/T shape
-      if(g.length>=5){
-        // create color bomb at first tile
-        const pos = g[Math.floor(g.length/2)];
-        createdSpecials.push({r:pos.r,c:pos.c,kind:'color'});
-      } else if(rows.size===1 || cols.size===1){
-        if(g.length===4){
-          // create striped along direction
-          const pos = g[Math.floor(g.length/2)];
-          const kind = rows.size===1 ? 'stripH' : 'stripV';
-          createdSpecials.push({r:pos.r,c:pos.c,kind});
-        }
-      } else {
-        // L/T
-        const pos = g[Math.floor(g.length/2)];
-        createdSpecials.push({r:pos.r,c:pos.c,kind:'bomb'});
-      }
-      for(const p of g) toRemove.add(key(p.r,p.c));
-    }
-    // remove tiles (but don't remove if obstacle below prevents removal — here obstacles are on tile and are removed when matched beside)
-    // For simplicity: removing a tile also damages obstacle at same spot (reduces hits).
-    for(const k of toRemove){
+    // gather all cells to remove
+    const toRem = new Set();
+    for(const g of matches) for(const p of g) toRem.add(key(p.r,p.c));
+    // animate removals
+    for(const k of toRem){
       const [r,c] = k.split('_').map(Number);
-      const ob = state.obstacles[k];
-      if(ob){
-        ob.hits--;
-        if(ob.hits<=0) delete state.obstacles[k];
-      }
-      state.board[r][c] = null;
+      const el = getTileElement(r,c);
+      if(el){ el.classList.add('removing'); }
     }
-    // place created specials at their positions (if still empty)
-    for(const s of createdSpecials){
-      if(!state.board[s.r][s.c]){
-        const tile = makeTile();
-        tile.special = s.kind;
-        state.board[s.r][s.c]=tile;
-      }else{
-        // if occupied, try to insert special above if possible
-        for(let rr=s.r-1;rr>=0;rr--){
-          if(!state.board[rr][s.c]){ const tile = makeTile(); tile.special = s.kind; state.board[rr][s.c]=tile; break; }
-        }
+    // scoring
+    state.score += toRem.size * 60 * chain;
+    render(); // update score quickly
+    // after animation delay, actually clear and drop
+    setTimeout(()=>{
+      for(const k of toRem){
+        const [r,c] = k.split('_').map(Number);
+        state.board[r][c] = null;
       }
-    }
-    renderAll();
-    beep(400 + chain*40, 0.06, 0.06);
-    // after short delay, let tiles fall
-    setTimeout(()=>{ gravity(); setTimeout(step, 220); }, 220);
+      gravity();
+      // after gravity settle, next chain
+      setTimeout(step, 200);
+    }, 260);
   }
   step();
 }
 
-/* gravity: for each column, collapse nulls and generate new tiles on top */
 function gravity(){
   for(let c=0;c<COLS;c++){
     let write = ROWS-1;
     for(let r=ROWS-1;r>=0;r--){
       if(state.board[r][c]){
         if(write !== r){
-          state.board[write][c]=state.board[r][c];
-          state.board[r][c]=null;
+          state.board[write][c] = state.board[r][c];
+          state.board[r][c] = null;
         }
         write--;
       }
     }
-    // fill top with new tiles
+    // fill new tiles from top
     for(let r=write;r>=0;r--){
-      state.board[r][c]=makeTile();
+      state.board[r][c] = makeTile();
     }
   }
-  renderAll();
+  render();
 }
 
-/* ---------- ANIMATIONS (simple visual feedback) ---------- */
-function playSwapAnim(r1,c1,r2,c2){
-  // visual: briefly mark swapped tiles as selected then render
-  state.selected = {r:r2,c:c2};
-  renderAll();
-  setTimeout(()=>{ state.selected = null; renderAll(); }, 160);
-}
-
-/* ---------- INPUT (tap/drag) ---------- */
-let pointerDown = false, startCell = null;
-boardEl.addEventListener('pointerdown', (e)=>{
-  const el = e.target.closest('.cell');
-  if(!el) return;
-  const r = Number(el.dataset.r), c = Number(el.dataset.c);
-  pointerDown=true; startCell={r,c};
-});
-boardEl.addEventListener('pointerup', (e)=>{
-  pointerDown=false;
-  const el = e.target.closest('.cell');
-  if(!el) { startCell=null; return; }
-  const r = Number(el.dataset.r), c = Number(el.dataset.c);
-  if(!startCell) { startCell={r,c}; selectCell(r,c); startCell=null; return; }
-  // if same cell -> toggle selection
-  if(startCell.r===r && startCell.c===c){ selectCell(r,c); startCell=null; return; }
-  // try swap if neighbor
-  if(canSwap(startCell.r,startCell.c,r,c)){
-    // if selected tile is a special and user wants to activate with swap? (this minimal impl treats swap normally)
-    const swapped = doSwap(startCell.r,startCell.c,r,c);
-    if(!swapped){
-      // no match -> small feedback
-      beep(220,0.05,0.03);
-    }
-  }else{
-    selectCell(r,c);
-  }
-  startCell=null;
-});
-boardEl.addEventListener('click',(e)=>{
-  // for tap-select (alternate)
-  if(e.detail && e.detail>1) return;
-  const el = e.target.closest('.cell'); if(!el) return;
-  const r = Number(el.dataset.r), c = Number(el.dataset.c);
-  selectCell(r,c);
-});
-
-/* selection/activation */
-function selectCell(r,c){
-  const cur = state.selected;
-  if(!cur){ state.selected={r,c}; renderAll(); return; }
-  if(cur.r===r && cur.c===c){ state.selected=null; renderAll(); return; }
-  // attempt swap
-  if(canSwap(cur.r,cur.c,r,c)){
-    const swapped = doSwap(cur.r,cur.c,r,c);
-    if(!swapped){ beep(220,0.05,0.04); state.selected=null; renderAll(); }
-  }else{
-    state.selected={r,c}; renderAll();
-  }
-}
-
-/* ---------- BOOSTERS ---------- */
-document.getElementById('boosts').addEventListener('click',(e)=>{
-  const b = e.target.closest('button');
-  if(!b) return;
-  const which = b.dataset.boost;
-  if(which==='hammer'){ useBooster('hammer'); }
-  if(which==='shuffle'){ useBooster('shuffle'); }
-});
-function useBooster(name){
-  if(state.boosts[name] <= 0){ alert('Бустер недоступен'); return; }
-  if(name==='hammer'){
-    // pick random obstacle or random tile and remove
-    let targetKey = null;
-    const obKeys = Object.keys(state.obstacles);
-    if(obKeys.length>0) targetKey = obKeys[randInt(obKeys.length)];
-    else {
-      // pick random tile and remove it (simulate broken)
-      const r=randInt(ROWS), c=randInt(COLS);
-      state.board[r][c]=null;
-      gravity();
-      processMatchesSequence();
-    }
-    if(targetKey){
-      delete state.obstacles[targetKey];
-      renderAll(); beep(720,0.08,0.08);
-    }
-  }else if(name==='shuffle'){
-    // shuffle board tile types only
-    const pool=[];
-    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){ if(state.board[r][c]) pool.push(state.board[r][c].type); }
-    shuffleArray(pool);
-    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){ if(state.board[r][c]) state.board[r][c].type = pool.pop(); }
-    renderAll(); beep(520,0.06,0.06);
-  }
-  state.boosts[name] = Math.max(0, state.boosts[name]-1);
-  saveProgress();
-}
-
-/* ---------- LEVEL / PROGRESSION ---------- */
+// LEVEL CHECKS
 function checkLevelEnd(){
-  const lvl = LEVELS[state.levelIndex];
+  const lvl = LEVELS[state.level];
   if(lvl.type==='score'){
-    if(state.score >= lvl.target){
-      levelWin();
-      return;
-    }
-  } else if(lvl.type==='clear'){
-    // count remaining obstacles
-    const remain = Object.keys(state.obstacles).length;
-    if(remain <= 0 || state.score >= lvl.target){ levelWin(); return; }
+    if(state.score >= lvl.target){ levelWin(); return; }
   }
-  if(state.movesLeft <= 0){
+  if(state.moves <= 0){
     levelFail();
   }
 }
 function levelWin(){
-  // calculate stars
-  const lvl = LEVELS[state.levelIndex];
+  const lvl = LEVELS[state.level];
   let stars = 1;
   const ratio = state.score / lvl.target;
-  if(ratio >= 1.6) stars = 3;
-  else if(ratio >= 1.1) stars = 2;
-  state.levelProgress[state.levelIndex] = Math.max(state.levelProgress[state.levelIndex]||0, stars);
-  showModal('Уровень пройден!', `<p>Вы получили ${stars} ⭐</p><p>Очки: ${state.score}</p>`, ()=>{ state.levelIndex = Math.min(LEVELS.length-1, state.levelIndex+1); initBoard(state.levelIndex); saveProgress(); closeModal(); });
-  beep(880,0.18,0.12);
-}
-function levelFail(){
-  state.lives = Math.max(0, state.lives - 1);
-  saveProgress();
-  if(state.lives <= 0){
-    showModal('Игра окончена', `<p>У вас закончились жизни. Прогресс сохранён.</p><p>Очки: ${state.score}</p>`, ()=>{ state.lives = START_LIVES; state.levelIndex = 0; initBoard(state.levelIndex); saveProgress(); closeModal(); });
-  }else{
-    showModal('Провал', `<p>Уровень не пройден. Потрачена жизнь.</p>`, ()=>{ initBoard(state.levelIndex); closeModal(); });
-  }
-  beep(160,0.18,0.06);
-}
-
-/* ---------- UI: menu/modal/pause ---------- */
-const overlay = document.getElementById('overlay'), modalContent = document.getElementById('modalContent');
-function showModal(title, html, onOk){
-  modalContent.innerHTML = `<h2>${title}</h2>${html}<div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn" id="modalOk">ОК</button></div>`;
-  overlay.classList.add('show');
-  const ok = document.getElementById('modalOk');
-  ok.focus();
-  ok.onclick = ()=>{ if(onOk) onOk(); else closeModal(); };
-}
-function closeModal(){ overlay.classList.remove('show'); modalContent.innerHTML=''; }
-
-/* menu */
-document.getElementById('menuBtn').addEventListener('click', ()=>{
-  showModal('Меню', `<p class="smalltext">Уровень ${state.levelIndex+1} — ${LEVELS[state.levelIndex].name}</p>
-  <p><button class="btn" id="menuRestart">Перезапустить уровень</button> <button class="btn" id="menuMain">В главное меню</button></p>
-  <p class="smalltext">Бустеры: молоток ${state.boosts.hammer}, перемешать ${state.boosts.shuffle}</p>`, ()=>{
-    // default OK closes
+  if(ratio>=1.6) stars=3; else if(ratio>=1.1) stars=2;
+  state.levelProgress[state.level] = Math.max(state.levelProgress[state.level]||0, stars);
+  showModal(`Уровень пройден — ${stars}⭐`, `Очки: ${state.score}`, ()=>{
+    state.level = Math.min(LEVELS.length-1, state.level+1);
+    initBoard(state.level);
     closeModal();
   });
-  setTimeout(()=>{ document.getElementById('menuRestart').onclick = ()=>{ initBoard(state.levelIndex); closeModal(); }; document.getElementById('menuMain').onclick = ()=>{ state.levelIndex = 0; initBoard(0); closeModal(); }; }, 10);
+}
+function levelFail(){
+  state.lives = Math.max(0, state.lives-1);
+  save();
+  if(state.lives<=0){
+    showModal('Игра окончена', 'Жизни кончились. Сброс прогресса.', ()=>{
+      state.lives = 5; state.level = 0; state.levelProgress = {}; initBoard(state.level); closeModal();
+    });
+  }else{
+    showModal('Провал', 'Уровень не пройден. Потрачена жизнь.', ()=>{ initBoard(state.level); closeModal(); });
+  }
+}
+
+// INPUT
+boardEl.addEventListener('click', (e)=>{
+  const cell = e.target.closest('.cell');
+  if(!cell) return;
+  const r = +cell.dataset.r, c = +cell.dataset.c;
+  selectCell(r,c);
 });
 
-/* restart/pause/sound */
-document.getElementById('restartBtn').addEventListener('click', ()=>{ if(confirm('Перезапустить уровень?')) initBoard(state.levelIndex); });
-document.getElementById('pauseBtn').addEventListener('click', ()=>{ showModal('Пауза', `<p>Игра на паузе</p><p><button class="btn" id="resumeBtn">Продолжить</button></p>`, ()=>{closeModal()}); setTimeout(()=>{ document.getElementById('resumeBtn').onclick = ()=>{ closeModal(); }; },10); });
-document.getElementById('soundToggle').addEventListener('click', ()=>{
-  state.soundOn = !state.soundOn;
-  document.getElementById('soundToggle').textContent = state.soundOn ? '🔊' : '🔇';
-  saveProgress();
+// RESTART BTN
+document.getElementById('restart').addEventListener('click', ()=>{
+  if(confirm('Перезапустить уровень?')) initBoard(state.level);
 });
 
-/* overlay click to close */
-overlay.addEventListener('click',(e)=>{ if(e.target===overlay) closeModal(); });
+// MODAL
+const modal = document.getElementById('modal');
+function showModal(title, html, ok){
+  modal.innerHTML = `<div style="font-weight:700;margin-bottom:8px">${title}</div><div style="margin-bottom:12px">${html}</div><div style="text-align:right"><button class="btn" id="modalOk">ОК</button></div>`;
+  modal.classList.add('show');
+  document.getElementById('modalOk').onclick = ()=>{ if(ok) ok(); else closeModal(); };
+}
+function closeModal(){ modal.classList.remove('show'); modal.innerHTML=''; }
 
-/* ---------- INITIALIZE ---------- */
-loadProgress();
-initBoard(state.levelIndex);
+// INIT
+load();
+initBoard(state.level);
 
-/* autosave */
-setInterval(()=>{ saveProgress(); }, 5000);
+/* autosave periodically */
+setInterval(()=>save(), 5000);
 
-/* quick testing helpers (dev) */
-// expose some functions to window for debugging in dev tools (optional)
-window._m3 = {state, LEVELS, initBoard, saveProgress, loadProgress};
+// expose for debug (optional)
+window._m3 = { state, initBoard, save, load };
 
 </script>
 </body>
