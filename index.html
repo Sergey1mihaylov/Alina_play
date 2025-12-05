@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+<title>Тройное соответствие — Telegram Mini App</title>
+<style>
+  :root{
+    --bg:#0f1724;
+    --panel:#111827;
+    --accent:#ef4444;
+    --accent-2:#2563eb;
+    --muted:#9ca3af;
+    --tile-gap:4px;
+    --ui-h:64px;
+    --radius:12px;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  html,body{height:100%;margin:0;font-family:var(--font-sans);background:linear-gradient(180deg,#0b1220 0%, #0f1724 100%);color:#fff;-webkit-tap-highlight-color:transparent;}
+  .app{display:flex;flex-direction:column;height:100vh;box-sizing:border-box;padding:8px 10px 12px;}
+  .header{height:var(--ui-h);display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px;border-radius:10px;background:rgba(255,255,255,0.02);backdrop-filter:blur(2px);}
+  .header .left, .header .center, .header .right{display:flex;align-items:center;gap:8px;}
+  .title{font-weight:600;font-size:16px}
+  .stat{font-size:13px;color:var(--muted)}
+  .main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;margin-top:6px;}
+  /* grid container */
+  .grid-wrap{position:relative;width:95vw;max-width:720px;background:transparent;border-radius:14px;padding:6px;display:flex;flex-direction:column;align-items:center;}
+  .board{position:relative;width:100%;background:rgba(255,255,255,0.02);border-radius:10px;padding:8px;box-sizing:border-box;display:flex;justify-content:center;align-items:center;}
+  /* dynamic grid using CSS variables */
+  .game-grid{display:grid;grid-auto-rows:var(--tile-size);grid-template-columns:repeat(var(--cols), var(--tile-size));gap:var(--tile-gap);width:100%;max-width:100%;}
+  .tile{display:flex;align-items:center;justify-content:center;font-size:calc(var(--tile-size) * 0.5);width:var(--tile-size);height:var(--tile-size);border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(0,0,0,0.06));box-shadow:0 3px 0 rgba(0,0,0,0.25);user-select:none;touch-action:none; position:relative; transition:transform 220ms cubic-bezier(.2,.9,.2,1), opacity 180ms;}
+  .tile[data-bonus="bomb"]{box-shadow:0 6px 0 rgba(200,30,30,0.2);border:2px solid rgba(255,80,80,0.12);}
+  .tile.empty{opacity:0;transform:scale(0.9);pointer-events:none;}
+  .tile.selected{transform:scale(0.95) translateZ(0);outline:3px solid rgba(255,255,255,0.12);box-shadow:0 6px 18px rgba(0,0,0,0.5);}
+  .tile.removing{animation:popRemove 260ms ease forwards;}
+  @keyframes popRemove{0%{transform:scale(1);opacity:1;}80%{transform:scale(1.25);opacity:1;}100%{transform:scale(0.2);opacity:0;}}
+  /* overlay canvas for line drawing */
+  canvas.line-canvas{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:40;}
+  /* controls bottom */
+  .controls{height:56px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px;margin-top:6px;}
+  .btn{height:44px;padding:6px 12px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.03);color:#fff;display:flex;align-items:center;gap:8px;font-size:15px;}
+  .btn.tall{height:48px;padding:8px 14px;}
+  .goal-bar{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.02);padding:8px;border-radius:10px;width:100%;box-sizing:border-box;}
+  .progress{height:10px;background:rgba(255,255,255,0.06);border-radius:6px;overflow:hidden;flex:1;}
+  .progress > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent-2),var(--accent));width:0%;}
+  .hud{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.02);}
+  .small{font-size:12px;color:var(--muted);}
+  .centered{display:flex;align-items:center;justify-content:center;}
+  /* responsive tile size */
+  @media (max-width:420px){
+    :root{--tile-gap:3px;}
+  }
+  /* theme for telegram color scheme (light/dark) */
+  .light-theme{background:linear-gradient(180deg,#f5f7fb,#eaf0ff);color:#0b1220}
+  .light-theme .tile{background:linear-gradient(180deg,#fff,#f1f5f9);color:#0b1220}
+  .hintFlash{animation:flash 800ms ease;}
+  @keyframes flash{0%{box-shadow:0 0 0 rgba(255,255,255,0);}50%{box-shadow:0 0 18px rgba(255,255,255,0.06);}100%{box-shadow:0 0 0 rgba(255,255,255,0);}}
+  /* inventory */
+  .inventory{display:flex;gap:6px;align-items:center;}
+  .inv-item{padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.02);font-size:14px;}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="header" id="header">
+    <div class="left">
+      <div class="title">Тройное соответствие</div>
+      <div class="small stat" id="levelLabel">Уровень 1</div>
+    </div>
+    <div class="center">
+      <div class="hud">
+        <div class="small">Очки</div>
+        <div style="font-weight:700;margin-left:6px;" id="score">0</div>
+      </div>
+    </div>
+    <div class="right">
+      <div class="hud"><div class="small">Время</div><div style="font-weight:700;margin-left:6px;" id="timer">--</div></div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="grid-wrap" id="gridWrap" role="application" aria-label="Игровое поле">
+      <div class="board" id="board">
+        <div id="grid" class="game-grid" aria-hidden="false"></div>
+        <canvas class="line-canvas" id="lineCanvas"></canvas>
+      </div>
+
+      <div class="goal-bar" id="goalBar">
+        <div style="min-width:120px;" id="goalText">Цель: собрать 10 троек</div>
+        <div class="progress"><i id="goalProgress" style="width:0%"></i></div>
+        <div class="small" id="goalCount">0/0</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn tall" id="pauseBtn">⏸ Пауза</button>
+      <div style="display:flex;gap:8px;flex:1;justify-content:flex-end;">
+        <div class="inventory" id="inventoryBox"></div>
+        <button class="btn" id="restartBtn">🔄 Перезапуск</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================
+   GameData & Assets
+   ========================= */
+const GameData = {
+  levels: [
+    { id:1, grid:{rows:6, cols:6}, items:['🍎','🍊','🍌'], goal:{type:'collectTriples', target:10}, timeLimit:120 },
+    { id:2, grid:{rows:7, cols:7}, items:['🐶','🐱','🐭','🐹'], goal:{type:'collectSpecific', item:'🐶', target:15}, timeLimit:150 },
+    { id:3, grid:{rows:7, cols:6}, items:['🍇','🍓','🍒','🍐','🍋'], goal:{type:'collectTriples', target:18}, timeLimit:160 },
+    { id:4, grid:{rows:6, cols:6}, items:['⚽','🏀','🏈','🎾'], goal:{type:'collectTriples', target:12}, timeLimit:120 },
+    { id:5, grid:{rows:8, cols:8},
+      items:[
+        {id:'apple', states:['🍎','🍏','🍎➜']},
+        {id:'flower', states:['🌱','🌿','🌻']},
+        {id:'leaf', states:['🍂','🍃','🍁']}
+      ],
+      goal:{type:'collectTriples', target:20},
+      timeLimit:210
+    }
+  ],
+  assets: {
+    // for prototype we use emoji. could be replaced with svg/base64 strings.
+  }
+};
+
+/* =========================
+   LocalStorage keys
+   ========================= */
+const LS = {
+  currentLevel: 'triple_currentLevel',
+  score: 'triple_score',
+  inventory: 'triple_inventory',
+  settings: 'triple_settings'
+};
+
+/* =========================
+   Global state
+   ========================= */
+let state = {
+  levelIndex: 0, // index in GameData.levels
+  grid: [],      // 2D array [r][c] of tile objects or null
+  rows: 6, cols: 6,
+  tileSize: 56,
+  score: 0,
+  inventory: {},
+  settings: {sound:true,music:false},
+  selection: [], // [{r,c,el,tile}]
+  isTouching: false,
+  timer: null,
+  timeLeft: 0,
+  goalProgress: 0,
+  removing: false,
+  canvasScale: {w:0,h:0}
+};
+
+/* =========================
+   Utilities
+   ========================= */
+const $ = (s,el=document)=>el.querySelector(s);
+const $$ = (s,el=document)=>Array.from(el.querySelectorAll(s));
+const rand = (arr) => arr[Math.floor(Math.random()*arr.length)];
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+
+/* =========================
+   Telegram WebApp integration (safe)
+   ========================= */
+const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
+if(tg){
+  try{ tg.expand(); }catch(e){}
+  try{ if(tg.setHeaderColor) tg.setHeaderColor('#2563eb'); }catch(e){}
+  try{ if(tg.setBackgroundColor) tg.setBackgroundColor('#0b1220'); }catch(e){}
+  try{ document.body.classList.add((tg.colorScheme||'dark') + '-theme'); }catch(e){}
+  try{
+    if(tg.BackButton){
+      tg.BackButton.show();
+      tg.BackButton.onClick(()=>{
+        // Возврат в меню уровней — упрощённо: перезапуск уровня
+        showLevelSelect();
+      });
+    }
+  }catch(e){}
+}
+
+/* =========================
+   Initialization & UI
+   ========================= */
+const gridEl = $('#grid');
+const canvas = $('#lineCanvas');
+const boardEl = $('#board');
+const scoreEl = $('#score');
+const levelLabel = $('#levelLabel');
+const timerEl = $('#timer');
+const goalText = $('#goalText');
+const goalProgressEl = $('#goalProgress');
+const goalCountEl = $('#goalCount');
+const inventoryBox = $('#inventoryBox');
+
+function init(){
+  loadSettings();
+  loadProgress();
+  bindUI();
+  // start at saved level or level 0
+  openLevel(state.levelIndex);
+  window.addEventListener('resize', onResize);
+  onResize();
+  requestAnimationFrame(drawLoop);
+}
+
+function bindUI(){
+  $('#pauseBtn').addEventListener('click',togglePause);
+  $('#restartBtn').addEventListener('click',()=>resetLevel(true));
+  // touch events on board
+  boardEl.addEventListener('touchstart', onTouchStart, {passive:false});
+  boardEl.addEventListener('touchmove', onTouchMove, {passive:false});
+  boardEl.addEventListener('touchend', onTouchEnd, {passive:false});
+  // mouse fallback
+  boardEl.addEventListener('mousedown', onMouseDown);
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseup', onMouseUp);
+}
+
+/* =========================
+   Persistence
+   ========================= */
+function saveProgress(){
+  try{
+    localStorage.setItem(LS.currentLevel, String(state.levelIndex));
+    localStorage.setItem(LS.score, String(state.score));
+    localStorage.setItem(LS.inventory, JSON.stringify(state.inventory));
+    localStorage.setItem(LS.settings, JSON.stringify(state.settings));
+  }catch(e){ console.warn('LS save failed',e); }
+}
+function loadProgress(){
+  try{
+    const lvl = parseInt(localStorage.getItem(LS.currentLevel));
+    if(!isNaN(lvl)) state.levelIndex = lvl;
+    const sc = parseInt(localStorage.getItem(LS.score));
+    if(!isNaN(sc)) state.score = sc;
+    const inv = localStorage.getItem(LS.inventory);
+    if(inv) state.inventory = JSON.parse(inv);
+  }catch(e){ console.warn('LS load failed',e); }
+}
+function loadSettings(){
+  try{
+    const s = localStorage.getItem(LS.settings);
+    if(s) state.settings = JSON.parse(s);
+  }catch(e){}
+}
+
+/* =========================
+   Level / Grid creation
+   ========================= */
+function openLevel(index){
+  state.levelIndex = clamp(index,0,GameData.levels.length-1);
+  const lvl = GameData.levels[state.levelIndex];
+  state.rows = lvl.grid.rows;
+  state.cols = lvl.grid.cols;
+  state.grid = Array.from({length:state.rows},()=>Array(state.cols).fill(null));
+  state.score = state.score || parseInt(localStorage.getItem(LS.score)) || 0;
+  state.inventory = state.inventory || {};
+  state.goalProgress = 0;
+  state.timeLeft = lvl.timeLimit || 120;
+  setupGridForLevel(lvl);
+  renderGrid();
+  updateHeader();
+  startTimer();
+  saveProgress();
+}
+
+function setupGridForLevel(lvl){
+  // Pre-generate grid with items available for level.
+  const items = normalizeLevelItems(lvl.items);
+  for(let r=0;r<state.rows;r++){
+    for(let c=0;c<state.cols;c++){
+      state.grid[r][c] = spawnRandomTile(items);
+    }
+  }
+  // Ensure no immediate triple matches on start — simple loop to break lines
+  removeInitialMatches(items);
+}
+
+function normalizeLevelItems(items){
+  // convert to array of possible tile descriptors {type,display,states?}
+  if(!items) return [];
+  const out = [];
+  items.forEach(it=>{
+    if(typeof it === 'string'){
+      out.push({type:it,display:it});
+    }else if(typeof it === 'object' && it.id && Array.isArray(it.states)){
+      // pick random state upon spawn
+      out.push({type:it.id,display:null, states: it.states});
+    }
+  });
+  return out;
+}
+
+function spawnRandomTile(items){
+  if(items.length===0) return null;
+  const choice = rand(items);
+  const tile = { type: choice.type || choice, display: choice.display || (choice.states ? rand(choice.states) : choice.type), bonus:null, id: genId() };
+  return tile;
+}
+
+function genId(){ return Math.random().toString(36).slice(2,9); }
+
+function removeInitialMatches(items){
+  // naive attempt: if any triple in row/col at start, replace center with another
+  for(let r=0;r<state.rows;r++){
+    for(let c=0;c<state.cols;c++){
+      const t = state.grid[r][c];
+      if(!t) continue;
+      // check horizontal
+      if(c<=state.cols-3){
+        const a=state.grid[r][c],b=state.grid[r][c+1],d=state.grid[r][c+2];
+        if(a && b && d && a.display===b.display && b.display===d.display){
+          state.grid[r][c+1] = spawnRandomTile(items);
+        }
+      }
+      // check vertical
+      if(r<=state.rows-3){
+        const a=state.grid[r][c],b=state.grid[r+1][c],d=state.grid[r+2][c];
+        if(a && b && d && a.display===b.display && b.display===d.display){
+          state.grid[r+1][c] = spawnRandomTile(items);
+        }
+      }
+    }
+  }
+}
+
+/* =========================
+   Render / DOM helpers
+   ========================= */
+function renderGrid(){
+  // set CSS variables for tile size based on container width and cols
+  const cols = state.cols;
+  gridEl.style.setProperty('--cols', cols);
+  // compute tile size to fit within board width while leaving some padding
+  const wrapWidth = document.getElementById('gridWrap').clientWidth - 16; // padding
+  const size = Math.floor((wrapWidth - (cols-1)*parseInt(getComputedStyle(document.documentElement).getPropertyValue('--tile-gap')) - 20) / cols);
+  state.tileSize = Math.max(36, Math.min(84, size));
+  gridEl.style.setProperty('--tile-size', state.tileSize + 'px');
+
+  // clear and repopulate
+  gridEl.innerHTML = '';
+  for(let r=0;r<state.rows;r++){
+    for(let c=0;c<state.cols;c++){
+      const tile = state.grid[r][c];
+      const tileEl = document.createElement('div');
+      tileEl.className = 'tile';
+      tileEl.dataset.r = r;
+      tileEl.dataset.c = c;
+      tileEl.setAttribute('role','button');
+      tileEl.setAttribute('aria-label', tile ? tile.display : 'пусто');
+      if(!tile) tileEl.classList.add('empty');
+      else{
+        tileEl.textContent = tile.display;
+        if(tile.bonus === 'bomb') tileEl.dataset.bonus = 'bomb';
+      }
+      gridEl.appendChild(tileEl);
+    }
+  }
+
+  // resize canvas to match board rect
+  resizeCanvas();
+  updateUI();
+}
+
+function updateHeader(){
+  const lvl = GameData.levels[state.levelIndex];
+  levelLabel.textContent = `Уровень ${lvl.id}`;
+  scoreEl.textContent = String(state.score);
+  timerEl.textContent = formatTime(state.timeLeft);
+  // goal
+  if(lvl.goal.type === 'collectTriples'){
+    goalText.textContent = `Цель: собрать ${lvl.goal.target} троек`;
+    updateGoalBar();
+  }else if(lvl.goal.type === 'collectSpecific'){
+    goalText.textContent = `Цель: собрать ${lvl.goal.target} ${lvl.goal.item}`;
+    updateGoalBar();
+  }
+}
+
+function updateGoalBar(){
+  const lvl = GameData.levels[state.levelIndex];
+  const target = lvl.goal.target || 0;
+  const percent = Math.min(100, (state.goalProgress/target)*100);
+  goalProgressEl.style.width = percent + '%';
+  goalCountEl.textContent = `${state.goalProgress}/${target}`;
+}
+
+function updateUI(){
+  // inventory
+  inventoryBox.innerHTML = '';
+  for(const k in state.inventory){
+    const div = document.createElement('div');
+    div.className = 'inv-item';
+    div.textContent = `${k}×${state.inventory[k]}`;
+    inventoryBox.appendChild(div);
+  }
+  scoreEl.textContent = String(state.score);
+  timerEl.textContent = formatTime(state.timeLeft);
+  updateGoalBar();
+}
+
+/* =========================
+   Timer
+   ========================= */
+function startTimer(){
+  stopTimer();
+  const lvl = GameData.levels[state.levelIndex];
+  state.timeLeft = lvl.timeLimit || state.timeLeft;
+  timerEl.textContent = formatTime(state.timeLeft);
+  state.timer = setInterval(()=>{
+    state.timeLeft--;
+    if(state.timeLeft<=0){
+      state.timeLeft = 0;
+      stopTimer();
+      onTimeExpired();
+    }
+    updateUI();
+  },1000);
+}
+function stopTimer(){
+  if(state.timer){ clearInterval(state.timer); state.timer = null; }
+}
+function togglePause(){
+  if(state.timer){ stopTimer(); $('#pauseBtn').textContent = '▶️ Продолжить'; }
+  else{ startTimer(); $('#pauseBtn').textContent = '⏸ Пауза'; }
+}
+function onTimeExpired(){
+  // level failed — simple notification and restart
+  alert('Время вышло. Уровень перезапущен.');
+  resetLevel(true);
+}
+
+/* =========================
+   Touch / Mouse handling & selection logic
+   ========================= */
+let inputState = {
+  isDown:false,
+  lastPos:null
+};
+
+function onTouchStart(e){
+  e.preventDefault();
+  const touch = e.changedTouches[0];
+  handlePointerStart({x:touch.clientX,y:touch.clientY});
+}
+function onTouchMove(e){
+  e.preventDefault();
+  const touch = e.changedTouches[0];
+  handlePointerMove({x:touch.clientX,y:touch.clientY});
+}
+function onTouchEnd(e){
+  e.preventDefault();
+  handlePointerEnd();
+}
+function onMouseDown(e){
+  if(e.button!==0) return;
+  handlePointerStart({x:e.clientX,y:e.clientY});
+}
+function onMouseMove(e){
+  if(!inputState.isDown) return;
+  handlePointerMove({x:e.clientX,y:e.clientY});
+}
+function onMouseUp(e){
+  if(!inputState.isDown) return;
+  handlePointerEnd();
+}
+
+function handlePointerStart(pos){
+  inputState.isDown = true;
+  inputState.lastPos = pos;
+  state.selection = [];
+  state.isTouching = true;
+  const tileInfo = getTileUnderPos(pos);
+  if(tileInfo) addToSelection(tileInfo.r,tileInfo.c);
+}
+function handlePointerMove(pos){
+  inputState.lastPos = pos;
+  if(!state.isTouching) return;
+  const tileInfo = getTileUnderPos(pos);
+  if(tileInfo){
+    // if tile under pointer is a valid adjacent tile and same display as selection start
+    if(state.selection.length===0){
+      addToSelection(tileInfo.r,tileInfo.c);
+    }else{
+      const last = state.selection[state.selection.length-1];
+      // if same tile already selected -> ignore
+      if(last.r===tileInfo.r && last.c===tileInfo.c) return;
+      // if tile already in selection but not last -> allow backtracking (remove tail) if previous was that tile
+      const idx = state.selection.findIndex(s=>s.r===tileInfo.r && s.c===tileInfo.c);
+      if(idx>=0){
+        // allow backtrack to idx
+        state.selection.splice(idx+1);
+        refreshSelectionVisuals();
+        return;
+      }
+      // check adjacency
+      if(isAdjacent(last.r,last.c,tileInfo.r,tileInfo.c)){
+        // check type match: must have same display OR bonus present (bomb can't be chained as normal)
+        const lastTile = state.grid[last.r][last.c];
+        const curTile = state.grid[tileInfo.r][tileInfo.c];
+        if(lastTile && curTile && lastTile.display === curTile.display && (!curTile.bonus || curTile.bonus === null)){
+          addToSelection(tileInfo.r,tileInfo.c);
+        }
+      }
+    }
+  }
+}
+function handlePointerEnd(){
+  inputState.isDown = false;
+  inputState.lastPos = null;
+  state.isTouching = false;
+  if(state.selection.length>=3){
+    processSelection();
+  }else{
+    // clear selection visuals
+    state.selection = [];
+    refreshSelectionVisuals();
+  }
+}
+
+/* Helpers to map pointer pos to tile */
+function getTileUnderPos(pos){
+  const rect = gridEl.getBoundingClientRect();
+  const x = pos.x - rect.left;
+  const y = pos.y - rect.top;
+  if(x<0||y<0||x>rect.width||y>rect.height) return null;
+  // compute column and row based on tile size + gap
+  const tileSize = state.tileSize;
+  const gap = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--tile-gap')) || 4;
+  const col = Math.floor(x / (tileSize + gap));
+  const row = Math.floor(y / (tileSize + gap));
+  if(row<0||col<0||row>=state.rows||col>=state.cols) return null;
+  return {r:row,c:col};
+}
+
+function isAdjacent(r1,c1,r2,c2){
+  const dr = Math.abs(r1-r2), dc = Math.abs(c1-c2);
+  return (dr+dc)===1;
+}
+
+function addToSelection(r,c){
+  const tile = state.grid[r][c];
+  if(!tile) return;
+  // don't add bonus tiles as regular selection (they can be activated)
+  // but allow them if same display and no bonus
+  // guard duplicates
+  if(state.selection.find(s=>s.r===r&&s.c===c)) return;
+  state.selection.push({r,c, tile});
+  refreshSelectionVisuals();
+}
+
+/* Visual selection update & canvas drawing */
+function refreshSelectionVisuals(){
+  $$('.tile').forEach(el=>el.classList.remove('selected'));
+  state.selection.forEach(s=>{
+    const selector = `.tile[data-r="${s.r}"][data-c="${s.c}"]`;
+    const el = $(selector, gridEl);
+    if(el) el.classList.add('selected');
+  });
+  // canvas points updated in drawLoop using state.selection and inputState.lastPos
+}
+
+/* =========================
+   Process selection -> removal, scoring, bonuses
+   ========================= */
+async function processSelection(){
+  if(state.removing) return;
+  state.removing = true;
+  const sel = state.selection.slice();
+  // validation: all same display
+  const firstTile = state.grid[sel[0].r][sel[0].c];
+  const allSame = sel.every(s=> state.grid[s.r][s.c] && state.grid[s.r][s.c].display === firstTile.display);
+  if(!allSame){ state.selection=[]; refreshSelectionVisuals(); state.removing=false; return; }
+
+  // determine score and bonus
+  const count = sel.length;
+  let gained = count * 10;
+  if(count>=4) gained += 30; // bonus points
+  state.score += gained;
+
+  // if 4+ -> create bomb at last selected position (simulate by leaving a bomb tile)
+  let createdBomb = false;
+  let bombPos = null;
+  if(count>=4){
+    createdBomb = true;
+    // we'll place bomb at the last position in selection after removals
+    bombPos = sel[sel.length-1];
+  }
+
+  // animate removal
+  for(const s of sel){
+    const el = `.tile[data-r="${s.r}"][data-c="${s.c}"]`;
+    const dom = $(el,gridEl);
+    if(dom){
+      dom.classList.add('removing');
+      // optional small delay between them for effect
+      await wait(40);
+    }
+  }
+  await wait(160);
+
+  // remove tiles from state.grid
+  for(const s of sel){
+    state.grid[s.r][s.c] = null;
+  }
+
+  // if created bomb: place bomb object at bombPos (we'll drop it from top later)
+  if(createdBomb && bombPos){
+    state.grid[bombPos.r][bombPos.c] = { type:'BOMB', display:'💣', bonus:'bomb', id:genId() };
+  }
+
+  // if any special active (bomb adjacent)? check bombs activation during selection (if selected tile adjacent to bomb, detonate)
+  // For simplicity, bombs only created; activation when next to selection will detonate after this removal step:
+  // Find bombs adjacent to any removed tile -> detonate them
+  const bombsToDetonate = [];
+  for(const s of sel){
+    const adj = neighbors(s.r,s.c);
+    for(const a of adj){
+      const t = state.grid[a.r][a.c];
+      if(t && t.bonus === 'bomb'){
+        bombsToDetonate.push({r:a.r,c:a.c});
+      }
+    }
+  }
+  // unique bombs
+  const uniqueBombs = bombsToDetonate.filter((v,i,self)=> i===self.findIndex(x=>x.r===v.r&&x.c===v.c));
+  for(const b of uniqueBombs){
+    detonateBomb(b.r,b.c);
+  }
+
+  // cascade gravity and refill
+  await applyGravityAndRefill();
+
+  // update goals & UI
+  const lvl = GameData.levels[state.levelIndex];
+  if(lvl.goal.type==='collectTriples'){
+    state.goalProgress += 1;
+  }else if(lvl.goal.type==='collectSpecific'){
+    if(firstTile.display === lvl.goal.item) state.goalProgress += count; // each tile counts
+  }
+
+  // check victory condition
+  const target = lvl.goal.target || 99999;
+  if(state.goalProgress >= target){
+    await wait(200);
+    onLevelComplete();
+  }
+
+  state.selection=[];
+  refreshSelectionVisuals();
+  updateUI();
+  saveProgress();
+  state.removing = false;
+}
+
+/* Bomb detonation: remove surrounding 8 tiles */
+function detonateBomb(r,c){
+  const toRemove = [{r,c}].concat(neighbors(r,c));
+  for(const pos of toRemove){
+    if(state.grid[pos.r] && state.grid[pos.r][pos.c]){
+      state.grid[pos.r][pos.c] = null;
+    }
+  }
+}
+
+/* neighbors helper */
+function neighbors(r,c){
+  const list=[];
+  for(let dr=-1;dr<=1;dr++){
+    for(let dc=-1;dc<=1;dc++){
+      if(dr===0 && dc===0) continue;
+      const nr=r+dr, nc=c+dc;
+      if(nr>=0 && nr<state.rows && nc>=0 && nc<state.cols) list.push({r:nr,c:nc});
+    }
+  }
+  return list;
+}
+
+/* Apply gravity: for each column, drop tiles down and create new on top */
+async function applyGravityAndRefill(){
+  const items = normalizeLevelItems(GameData.levels[state.levelIndex].items);
+  for(let c=0;c<state.cols;c++){
+    // read column bottom to top
+    const colTiles = [];
+    for(let r=state.rows-1;r>=0;r--){
+      if(state.grid[r][c]) colTiles.push(state.grid[r][c]);
+    }
+    // fill spaces on top with new tiles
+    const missing = state.rows - colTiles.length;
+    const newTiles = Array.from({length:missing}, ()=> spawnRandomTile(items));
+    // new arrangement top->bottom
+    const newCol = newTiles.concat(colTiles.reverse()).reverse();
+    // write back
+    for(let r=0;r<state.rows;r++){
+      state.grid[r][c] = newCol[r] || null;
+    }
+  }
+  // nice little render & cascade animation: re-render grid and briefly flash
+  renderGrid();
+  await wait(220);
+}
+
+/* Level completion */
+function onLevelComplete(){
+  stopTimer();
+  state.score += 100 * (GameData.levels[state.levelIndex].id); // reward
+  alert('Уровень пройден! Очки: ' + state.score);
+  // advance to next level if available
+  if(state.levelIndex < GameData.levels.length -1){
+    state.levelIndex++;
+    saveProgress();
+    openLevel(state.levelIndex);
+  }else{
+    // completed last level — reset progress or stay
+    alert('Поздравляем! Все уровни пройдены.');
+    // keep at last level
+    saveProgress();
+  }
+}
+
+/* Reset level */
+function resetLevel(save=false){
+  if(save===false) { /*per user: restart level*/ }
+  const lvl = GameData.levels[state.levelIndex];
+  state.grid = Array.from({length:state.rows},()=>Array(state.cols).fill(null));
+  setupGridForLevel(lvl);
+  renderGrid();
+  startTimer();
+  state.goalProgress = 0;
+  if(save) saveProgress();
+}
+
+/* =========================
+   Helpers & draw loop for canvas
+   ========================= */
+function wait(ms){ return new Promise(res=>setTimeout(res,ms)); }
+
+function formatTime(sec){
+  if(sec==null) return '--';
+  const m = Math.floor(sec/60), s = sec%60;
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+
+function resizeCanvas(){
+  const rect = boardEl.getBoundingClientRect();
+  canvas.width = Math.round(rect.width * devicePixelRatio);
+  canvas.height = Math.round(rect.height * devicePixelRatio);
+  canvas.style.width = rect.width+'px';
+  canvas.style.height = rect.height+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  state.canvasScale = {w:rect.width, h:rect.height};
+}
+
+function onResize(){
+  renderGrid();
+}
+
+/* draw line between centers of selected tiles and follow pointer */
+function drawLoop(){
+  const ctx = canvas.getContext('2d');
+  if(!ctx) return requestAnimationFrame(drawLoop);
+  // clear
+  ctx.clearRect(0,0, state.canvasScale.w, state.canvasScale.h);
+  if(state.selection.length>0){
+    ctx.lineWidth = 8;
+    ctx.lineCap = 'round';
+    // gradient stroke
+    const grad = ctx.createLinearGradient(0,0,state.canvasScale.w,state.canvasScale.h);
+    grad.addColorStop(0,'rgba(37,99,235,0.95)');
+    grad.addColorStop(1,'rgba(239,68,68,0.95)');
+    ctx.strokeStyle = grad;
+    ctx.beginPath();
+    for(let i=0;i<state.selection.length;i++){
+      const s = state.selection[i];
+      const center = tileCenterPos(s.r,s.c);
+      if(i===0) ctx.moveTo(center.x,center.y);
+      else ctx.lineTo(center.x,center.y);
+    }
+    // follow pointer
+    if((inputState.isDown || state.isTouching) && inputState.lastPos){
+      const pos = inputState.lastPos;
+      const rect = gridEl.getBoundingClientRect();
+      const localX = pos.x - rect.left;
+      const localY = pos.y - rect.top;
+      if(state.selection.length>0){
+        ctx.lineTo(localX,localY);
+      }else{
+        // small dot
+        ctx.moveTo(localX,localY);
+      }
+    }
+    ctx.stroke();
+    // draw end circles
+    for(let i=0;i<state.selection.length;i++){
+      const s=state.selection[i];
+      const cpos=tileCenterPos(s.r,s.c);
+      ctx.fillStyle = 'rgba(255,255,255,0.06)';
+      ctx.beginPath();
+      ctx.arc(cpos.x,cpos.y,14,0,Math.PI*2);
+      ctx.fill();
+    }
+  }
+  requestAnimationFrame(drawLoop);
+}
+
+function tileCenterPos(r,c){
+  const tileSize = state.tileSize;
+  const gap = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--tile-gap')) || 4;
+  const left = (tileSize + gap) * c + tileSize/2 + 8; // 8 padding
+  const top = (tileSize + gap) * r + tileSize/2 + 8;
+  return {x:left, y:top};
+}
+
+/* =========================
+   Utilities: neighbors, random helpers already implemented
+   ========================= */
+
+/* =========================
+   Level select (simple modal-like)
+   ========================= */
+function showLevelSelect(){
+  const choice = prompt('Ввести номер уровня (1..' + GameData.levels.length + ') или ОТМЕНА', String(GameData.levels[state.levelIndex].id));
+  if(choice!==null){
+    const num = parseInt(choice);
+    if(!isNaN(num) && num>=1 && num<=GameData.levels.length){
+      state.levelIndex = num-1;
+      saveProgress();
+      openLevel(state.levelIndex);
+    }else alert('Неверный уровень');
+  }
+}
+
+/* =========================
+   Init & start
+   ========================= */
+init();
+
+/* =========================
+   Extra small helpers
+   ========================= */
+function updateScore(n){
+  state.score += n;
+  updateUI();
+  saveProgress();
+}
+
+/* graceful unload save */
+window.addEventListener('beforeunload', ()=>saveProgress());
+
+</script>
+</body>
+</html>
