@@ -1,1 +1,1547 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>PetClicker TWA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+  <!-- Telegram WebApp JS -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <style>
+    :root {
+      --bg-main: #f9f4f0;
+      --bg-card: #ffffff;
+      --bg-card-soft: #f3e4d8;
+      --accent: #ff9f6b;
+      --accent-soft: rgba(255, 159, 107, 0.2);
+      --accent-strong: #ff7c3a;
+      --text-main: #2f3542;
+      --text-soft: #6b7280;
+      --success: #34d399;
+      --warning: #facc15;
+      --danger: #f97373;
+      --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.18);
+      --radius-lg: 24px;
+      --radius-xl: 30px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #ffe9d2 0, #f9f4f0 45%, #f0e4dd 100%);
+      color: var(--text-main);
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+    }
+
+    .app {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: calc(env(safe-area-inset-top, 16px)) 16px calc(env(safe-area-inset-bottom, 16px)) 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Header */
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.8);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+      backdrop-filter: blur(14px);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .close-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      background: rgba(0, 0, 0, 0.04);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .user-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .avatar-circle {
+      width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #ff9f6b, #ff6f91);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #fff;
+    }
+
+    .user-name {
+      max-width: 120px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text-soft);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #ffd28f, #ff9f6b);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .currency-icon {
+      font-size: 16px;
+    }
+
+    /* Screens container */
+    .screens {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: none;
+      padding-top: 6px;
+    }
+
+    .screen.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Cards & layout */
+    .card {
+      flex: 1;
+      background: linear-gradient(145deg, #fff7ee, #ffffff);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-soft);
+      padding: 18px 16px 16px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background-image:
+        radial-gradient(circle at 10% 0%, rgba(255, 171, 96, 0.16) 0, transparent 52%),
+        radial-gradient(circle at 90% 0%, rgba(96, 153, 255, 0.12) 0, transparent 55%),
+        radial-gradient(circle at 0% 90%, rgba(135, 255, 167, 0.16) 0, transparent 45%),
+        radial-gradient(circle at 100% 90%, rgba(255, 171, 193, 0.15) 0, transparent 50%);
+      opacity: 0.9;
+      pointer-events: none;
+    }
+
+    .card-inner {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .card-header {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 4px;
+    }
+
+    .card-title {
+      font-size: 20px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #3b4256;
+    }
+
+    .card-subtitle {
+      font-size: 13px;
+      color: var(--text-soft);
+    }
+
+    /* Pet selection */
+    .pet-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .pet-card {
+      position: relative;
+      border-radius: 24px;
+      padding: 10px 8px 10px 8px;
+      text-align: center;
+      background: linear-gradient(145deg, #ffffff, #ffe7cf);
+      box-shadow: 0 10px 24px rgba(255, 159, 107, 0.23);
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.15s ease, border 0.12s ease;
+      border: 2px solid transparent;
+    }
+
+    .pet-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 28px rgba(255, 159, 107, 0.32);
+    }
+
+    .pet-card.selected {
+      border-color: var(--accent-strong);
+      box-shadow: 0 14px 32px rgba(255, 159, 107, 0.35);
+      background: linear-gradient(145deg, #fff0dc, #ffe2c3);
+    }
+
+    .pet-emoji-wrap {
+      width: 68px;
+      height: 68px;
+      margin: 0 auto 6px auto;
+      border-radius: 24px;
+      background: radial-gradient(circle at 30% 10%, #ffffff 0, #ffe0c4 45%, #ffc68e 100%);
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.7), 0 10px 18px rgba(0, 0, 0, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pet-emoji-wrap::after {
+      content: "";
+      position: absolute;
+      top: -40%;
+      left: -20%;
+      width: 140%;
+      height: 60%;
+      background: linear-gradient(to bottom, rgba(255, 255, 255, 0.95), transparent);
+      opacity: 0.9;
+    }
+
+    .pet-emoji {
+      font-size: 38px;
+      position: relative;
+      z-index: 1;
+      animation: float-pet 2.4s ease-in-out infinite;
+    }
+
+    .pet-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #3f3d56;
+    }
+
+    .pet-tag {
+      margin-top: 3px;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.65);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--text-soft);
+    }
+
+    /* Inputs & buttons */
+    .form-group {
+      margin-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #4b5563;
+    }
+
+    .form-input {
+      border-radius: 999px;
+      border: 1.5px solid rgba(148, 163, 184, 0.4);
+      padding: 10px 14px;
+      font-size: 14px;
+      outline: none;
+      background: rgba(255, 255, 255, 0.8);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04);
+    }
+
+    .form-input:focus {
+      border-color: #ff9f6b;
+      box-shadow: 0 0 0 1px rgba(255, 159, 107, 0.4);
+    }
+
+    .btn-primary {
+      margin-top: auto;
+      width: 100%;
+      border-radius: 999px;
+      padding: 14px 16px;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      background: linear-gradient(135deg, #ff9f6b, #ff7b7b);
+      color: #fff;
+      box-shadow: 0 14px 32px rgba(255, 140, 101, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      letter-spacing: 0.01em;
+    }
+
+    .btn-primary:active {
+      transform: translateY(1px) scale(0.99);
+      box-shadow: 0 8px 20px rgba(255, 140, 101, 0.35);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    .btn-secondary {
+      border-radius: 999px;
+      padding: 10px 14px;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #4b5563;
+    }
+
+    .btn-secondary:active {
+      transform: translateY(1px);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Main screen layout */
+    .main-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .pet-info {
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: rgba(255, 255, 255, 0.8);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+
+    .pet-info-name {
+      font-weight: 700;
+      color: #374151;
+    }
+
+    .main-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 6px;
+    }
+
+    .pet-stage-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pet-stage {
+      width: 220px;
+      max-width: 90%;
+      aspect-ratio: 1 / 1;
+      border-radius: 32px;
+      background: radial-gradient(circle at 50% 15%, #fff9f4 0, #ffe4c7 45%, #ffc48b 100%);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.2);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pet-stage-floor {
+      position: absolute;
+      inset-inline: -20%;
+      bottom: -6%;
+      height: 40%;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.8) 0, transparent 55%),
+        radial-gradient(circle at 80% 0%, rgba(255, 255, 255, 0.9) 0, transparent 60%),
+        radial-gradient(circle at 50% 20%, rgba(0, 0, 0, 0.14) 0, transparent 70%);
+      opacity: 0.6;
+    }
+
+    .pet-main-sprite {
+      width: 120px;
+      height: 120px;
+      border-radius: 40px;
+      background: radial-gradient(circle at 30% 10%, #ffffff 0, #ffe2c5 45%, #ffb784 100%);
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.85), 0 16px 30px rgba(0, 0, 0, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pet-main-emoji {
+      font-size: 64px;
+      position: relative;
+      z-index: 2;
+      animation: idle-breathe 2.7s ease-in-out infinite;
+    }
+
+    .pet-main-highlight {
+      position: absolute;
+      top: -40%;
+      left: -10%;
+      width: 130%;
+      height: 60%;
+      background: linear-gradient(to bottom, rgba(255, 255, 255, 1), transparent);
+      opacity: 0.9;
+      z-index: 1;
+    }
+
+    .pet-bounce {
+      animation: pet-bounce 0.4s ease-out;
+    }
+
+    .pet-heart {
+      position: absolute;
+      font-size: 26px;
+      animation: heart-pop 0.8s ease-out forwards;
+      pointer-events: none;
+    }
+
+    /* Stats */
+    .stats-panel {
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 22px;
+      padding: 10px 10px 8px 10px;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .stat-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stat-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .stat-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .stat-label-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+
+    .stat-label-row strong {
+      color: #374151;
+    }
+
+    .stat-bar {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(229, 231, 235, 0.85);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .stat-bar-fill {
+      position: absolute;
+      inset-block: 0;
+      left: 0;
+      width: 40%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #ff9f6b, #ff7b7b);
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6);
+      transition: width 0.22s ease-out;
+    }
+
+    .stat-bar-fill.energy {
+      background: linear-gradient(90deg, #4ade80, #22c55e);
+    }
+
+    /* Main bottom area */
+    .main-bottom {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .primary-action {
+      width: 100%;
+    }
+
+    .primary-action .btn-primary {
+      font-size: 16px;
+    }
+
+    .secondary-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .secondary-actions .btn-secondary {
+      flex: 1;
+      justify-content: center;
+    }
+
+    /* Shop overlay */
+    .shop-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.32);
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      padding: 0 10px calc(env(safe-area-inset-bottom, 16px)) 10px;
+      z-index: 20;
+    }
+
+    .shop-overlay.hidden {
+      display: none;
+    }
+
+    .shop-panel {
+      width: 100%;
+      max-width: 480px;
+      border-radius: 24px 24px 0 0;
+      background: #fff7ee;
+      box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.35);
+      padding: 12px 14px 12px 14px;
+      max-height: 70vh;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+    }
+
+    .shop-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .shop-title {
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .shop-balance {
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.9);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--text-soft);
+    }
+
+    .shop-items {
+      margin-top: 4px;
+      overflow-y: auto;
+      padding-right: 2px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .shop-item {
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), #ffe4c9);
+      padding: 10px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+    }
+
+    .shop-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      background: radial-gradient(circle at 30% 0%, #ffffff 0, #ffd1a7 45%, #ffb370 100%);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+    }
+
+    .shop-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .shop-item-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #374151;
+    }
+
+    .shop-item-desc {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .shop-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 2px;
+      font-size: 12px;
+    }
+
+    .shop-price {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.9);
+      color: var(--text-soft);
+    }
+
+    .shop-tag {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.7);
+      color: #16a34a;
+    }
+
+    .shop-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .shop-btn {
+      border-radius: 999px;
+      padding: 8px 12px;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: linear-gradient(135deg, #ff9f6b, #ff7b7b);
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(255, 159, 107, 0.45);
+    }
+
+    .shop-btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 4px 10px rgba(255, 159, 107, 0.35);
+    }
+
+    .shop-btn.disabled {
+      opacity: 0.5;
+      cursor: default;
+      box-shadow: none;
+      background: rgba(148, 163, 184, 0.3);
+      color: #4b5563;
+    }
+
+    .shop-btn.secondary {
+      background: rgba(255, 255, 255, 0.95);
+      color: #4b5563;
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Utility */
+    .text-soft {
+      color: var(--text-soft);
+    }
+
+    .mt-xs { margin-top: 4px; }
+    .mt-s { margin-top: 8px; }
+
+    /* Animations */
+    @keyframes float-pet {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+      100% { transform: translateY(0); }
+    }
+
+    @keyframes idle-breathe {
+      0% { transform: translateY(0) scale(1); }
+      35% { transform: translateY(-2px) scale(1.02); }
+      70% { transform: translateY(0) scale(1); }
+      100% { transform: translateY(0) scale(1); }
+    }
+
+    @keyframes pet-bounce {
+      0% { transform: translateY(0) scale(1); }
+      30% { transform: translateY(-10px) scale(1.03); }
+      60% { transform: translateY(2px) scale(0.97); }
+      100% { transform: translateY(0) scale(1); }
+    }
+
+    @keyframes heart-pop {
+      0% { transform: translate(-50%, -10px) scale(0.6); opacity: 0; }
+      20% { opacity: 1; }
+      100% { transform: translate(-50%, -46px) scale(1.2); opacity: 0; }
+    }
+
+    /* Small screens adjustments */
+    @media (max-height: 640px) {
+      .pet-stage {
+        width: 180px;
+      }
+      .pet-main-sprite {
+        width: 104px;
+        height: 104px;
+      }
+      .pet-main-emoji {
+        font-size: 54px;
+      }
+      .btn-primary {
+        padding-block: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-left">
+      <button class="close-btn" id="closeBtn" aria-label="Закрыть">
+        ✕
+      </button>
+      <div class="user-chip">
+        <div class="avatar-circle" id="userAvatar">
+          🧸
+        </div>
+        <div class="user-name" id="userName">Гость</div>
+      </div>
+    </div>
+    <div class="header-right" id="headerBalance">
+      <span class="currency-icon">💛</span>
+      <span id="happinessBalance">0</span>
+    </div>
+  </header>
+
+  <!-- Screens -->
+  <main class="screens">
+    <!-- Screen 1: choose pet -->
+    <section class="screen active" id="screenSelectPet">
+      <div class="card">
+        <div class="card-inner">
+          <div class="card-header">
+            <div class="card-title">
+              Выбери питомца
+              <span>🏡</span>
+            </div>
+            <div class="card-subtitle">
+              Выберите, кто будет жить в вашем уютном мини-домике.
+            </div>
+          </div>
+
+          <div class="pet-grid">
+            <button class="pet-card" data-pet="cat" type="button">
+              <div class="pet-emoji-wrap">
+                <div class="pet-emoji">🐱</div>
+              </div>
+              <div class="pet-name">Котёнок</div>
+              <div class="pet-tag">
+                🧶 Ласковый
+              </div>
+            </button>
+
+            <button class="pet-card" data-pet="dog" type="button">
+              <div class="pet-emoji-wrap">
+                <div class="pet-emoji">🐶</div>
+              </div>
+              <div class="pet-name">Щенок</div>
+              <div class="pet-tag">
+                🦴 Игривый
+              </div>
+            </button>
+
+            <button class="pet-card" data-pet="hamster" type="button">
+              <div class="pet-emoji-wrap">
+                <div class="pet-emoji">🐹</div>
+              </div>
+              <div class="pet-name">Хомячок</div>
+              <div class="pet-tag">
+                🌰 Пухлый
+              </div>
+            </button>
+          </div>
+
+          <div class="mt-s text-soft" style="font-size: 12px;">
+            Вы всегда сможете заботиться о своём питомце позже — прогресс сохранится.
+          </div>
+
+          <button class="btn-primary" id="btnToName" disabled>
+            Далее
+            <span>➜</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 2: pet name -->
+    <section class="screen" id="screenNamePet">
+      <div class="card">
+        <div class="card-inner">
+          <div class="card-header">
+            <div class="card-title">
+              Имя питомца
+              <span>✏️</span>
+            </div>
+            <div class="card-subtitle" id="nameSubtitle">
+              Придумайте тёплое имя для вашего нового друга.
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="petNameInput">
+              Как назовём питомца?
+            </label>
+            <input
+              id="petNameInput"
+              class="form-input"
+              placeholder="Например: Пушок, Лора, Буба..."
+              maxlength="18"
+            />
+          </div>
+
+          <div class="mt-xs text-soft" style="font-size: 12px;">
+            Имя можно поменять позже, но питомцу понравится, если вы будете звать его ласково. 💛
+          </div>
+
+          <button class="btn-primary" id="btnCreatePet">
+            Создать питомца
+            <span>✨</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 3: main game -->
+    <section class="screen" id="screenMain">
+      <div class="card">
+        <div class="card-inner">
+          <div class="card-header">
+            <div class="main-top-row">
+              <div class="pet-info">
+                <span id="petTypeLabel">🐱 Котёнок</span>
+                <span>•</span>
+                <span class="pet-info-name" id="petNameLabel">Питомец</span>
+              </div>
+              <button class="btn-secondary" id="btnOpenShop" type="button">
+                🛍 Магазин
+              </button>
+            </div>
+            <div class="card-subtitle">
+              Коснитесь, чтобы порадовать питомца и заработать <strong>Счастье</strong>.
+            </div>
+          </div>
+
+          <div class="main-body">
+            <div class="pet-stage-wrap">
+              <div class="pet-stage" id="petStage">
+                <div class="pet-stage-floor"></div>
+                <div class="pet-main-sprite" id="petSprite">
+                  <div class="pet-main-highlight"></div>
+                  <div class="pet-main-emoji" id="petEmoji">🐱</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="stats-panel">
+              <div class="stat-row">
+                <div class="stat-icon">
+                  💛
+                </div>
+                <div class="stat-content">
+                  <div class="stat-label-row">
+                    <span>Счастье</span>
+                    <span><strong id="happinessText">0 / 200</strong></span>
+                  </div>
+                  <div class="stat-bar">
+                    <div class="stat-bar-fill" id="happinessBar"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="stat-row">
+                <div class="stat-icon">
+                  ⚡
+                </div>
+                <div class="stat-content">
+                  <div class="stat-label-row">
+                    <span>Энергия</span>
+                    <span><strong id="energyText">100 / 100</strong></span>
+                  </div>
+                  <div class="stat-bar">
+                    <div class="stat-bar-fill energy" id="energyBar"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-xs text-soft" style="font-size: 11px;">
+                Энергия постепенно снижается. Когда питомец устал, он получает меньше Счастья за взаимодействие.
+              </div>
+            </div>
+
+            <div class="main-bottom">
+              <div class="primary-action">
+                <button class="btn-primary" id="btnPetAction" type="button">
+                  <span id="actionEmoji">🤗</span>
+                  <span id="actionText">Погладить (+10)</span>
+                </button>
+              </div>
+
+              <div class="secondary-actions">
+                <button class="btn-secondary" id="btnChangeAction" type="button">
+                  🍪 Покормить
+                </button>
+                <button class="btn-secondary" id="btnHint" type="button">
+                  💡 Подсказка
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Shop -->
+  <div class="shop-overlay hidden" id="shopOverlay">
+    <div class="shop-panel">
+      <div class="shop-header">
+        <div class="shop-title">
+          🛍 Магазин игрушек
+        </div>
+        <div class="shop-balance">
+          <span>💛</span>
+          <span id="shopBalance">0</span>
+        </div>
+      </div>
+
+      <div class="shop-items">
+        <!-- Мячик -->
+        <div class="shop-item" data-item-id="ball">
+          <div class="shop-icon">🧶</div>
+          <div class="shop-content">
+            <div class="shop-item-title">Мячик</div>
+            <div class="shop-item-desc">
+              Любимая игрушка для игр в комнате. Навсегда увеличивает Счастье за клик.
+            </div>
+            <div class="shop-meta">
+              <div class="shop-price">
+                💛 <span class="shop-price-value" data-price-for="ball">30</span>
+              </div>
+              <div class="shop-tag" id="shopBallTag">
+                +5 к счастью за клик
+              </div>
+            </div>
+          </div>
+          <div class="shop-actions">
+            <button class="shop-btn" data-action="buy-ball" type="button">
+              Купить
+            </button>
+          </div>
+        </div>
+
+        <!-- Игрушка-автокликер -->
+        <div class="shop-item" data-item-id="toy">
+          <div class="shop-icon">🧸</div>
+          <div class="shop-content">
+            <div class="shop-item-title">Игрушка-автокликер</div>
+            <div class="shop-item-desc">
+              Питомец будет играть сам, даже когда вы просто смотрите. Добавляет Счастье каждые 10 секунд.
+            </div>
+            <div class="shop-meta">
+              <div class="shop-price">
+                💛 <span class="shop-price-value" data-price-for="toy">80</span>
+              </div>
+              <div class="shop-tag" id="shopToyTag">
+                +5 каждые 10 секунд
+              </div>
+            </div>
+          </div>
+          <div class="shop-actions">
+            <button class="shop-btn" data-action="buy-toy" type="button">
+              Купить
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 6px; display: flex; justify-content: flex-end;">
+        <button class="shop-btn secondary" id="btnCloseShop" type="button">
+          Закрыть
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+
+    if (tg) {
+      try {
+        tg.ready();
+        tg.expand();
+        if (tg.setBackgroundColor) tg.setBackgroundColor("#f9f4f0");
+      } catch (e) {
+        console.warn("Telegram WebApp init error:", e);
+      }
+    }
+
+    const STORAGE_KEY = "pet_clicker_twa_state_v1";
+
+    const screens = {
+      select: document.getElementById("screenSelectPet"),
+      name: document.getElementById("screenNamePet"),
+      main: document.getElementById("screenMain"),
+    };
+
+    const petCards = document.querySelectorAll(".pet-card");
+    const btnToName = document.getElementById("btnToName");
+    const petNameInput = document.getElementById("petNameInput");
+    const btnCreatePet = document.getElementById("btnCreatePet");
+    const nameSubtitle = document.getElementById("nameSubtitle");
+
+    const closeBtn = document.getElementById("closeBtn");
+    const userNameLabel = document.getElementById("userName");
+    const userAvatar = document.getElementById("userAvatar");
+    const happinessBalanceLabel = document.getElementById("happinessBalance");
+
+    const petTypeLabel = document.getElementById("petTypeLabel");
+    const petNameLabel = document.getElementById("petNameLabel");
+    const petEmojiEl = document.getElementById("petEmoji");
+    const petSpriteEl = document.getElementById("petSprite");
+    const petStageEl = document.getElementById("petStage");
+
+    const happinessText = document.getElementById("happinessText");
+    const happinessBar = document.getElementById("happinessBar");
+    const energyText = document.getElementById("energyText");
+    const energyBar = document.getElementById("energyBar");
+
+    const btnPetAction = document.getElementById("btnPetAction");
+    const btnChangeAction = document.getElementById("btnChangeAction");
+    const btnHint = document.getElementById("btnHint");
+    const actionEmoji = document.getElementById("actionEmoji");
+    const actionText = document.getElementById("actionText");
+
+    const shopOverlay = document.getElementById("shopOverlay");
+    const btnOpenShop = document.getElementById("btnOpenShop");
+    const btnCloseShop = document.getElementById("btnCloseShop");
+    const shopBalance = document.getElementById("shopBalance");
+    const shopBallTag = document.getElementById("shopBallTag");
+    const shopToyTag = document.getElementById("shopToyTag");
+
+    const shopButtons = {
+      ball: document.querySelector('[data-action="buy-ball"]'),
+      toy: document.querySelector('[data-action="buy-toy"]'),
+    };
+
+    let energyIntervalId = null;
+    let autoClickIntervalId = null;
+
+    const defaultState = {
+      petType: null,
+      petName: "",
+      happiness: 0,
+      happinessMax: 200,
+      energy: 100,
+      energyMax: 100,
+      clickBase: 10,
+      clickBonus: 0,
+      actionMode: "pet", // "pet" | "feed"
+      items: {
+        ball: false,
+        toy: false,
+      },
+    };
+
+    let state = { ...defaultState };
+
+    function showAlert(msg) {
+      if (tg && tg.showAlert) {
+        tg.showAlert(msg);
+      } else {
+        alert(msg);
+      }
+    }
+
+    function switchScreen(key) {
+      Object.values(screens).forEach((el) => el.classList.remove("active"));
+      if (screens[key]) {
+        screens[key].classList.add("active");
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {
+        console.warn("Failed to save state:", e);
+      }
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        state = {
+          ...defaultState,
+          ...parsed,
+          items: {
+            ...defaultState.items,
+            ...(parsed.items || {}),
+          },
+        };
+      } catch (e) {
+        console.warn("Failed to load state:", e);
+      }
+    }
+
+    function getPetDisplay(petType) {
+      switch (petType) {
+        case "cat":
+          return { label: "🐱 Котёнок", emoji: "🐱" };
+        case "dog":
+          return { label: "🐶 Щенок", emoji: "🐶" };
+        case "hamster":
+          return { label: "🐹 Хомячок", emoji: "🐹" };
+        default:
+          return { label: "🐾 Питомец", emoji: "🐾" };
+      }
+    }
+
+    function updateStatsUI() {
+      const happiness = Math.max(0, Math.min(state.happiness, state.happinessMax));
+      const energy = Math.max(0, Math.min(state.energy, state.energyMax));
+
+      happinessBalanceLabel.textContent = happiness.toString();
+      shopBalance.textContent = happiness.toString();
+      happinessText.textContent = `${happiness} / ${state.happinessMax}`;
+      energyText.textContent = `${energy} / ${state.energyMax}`;
+
+      const hPercent = state.happinessMax > 0 ? (happiness / state.happinessMax) * 100 : 0;
+      const ePercent = state.energyMax > 0 ? (energy / state.energyMax) * 100 : 0;
+
+      happinessBar.style.width = `${Math.min(100, Math.max(0, hPercent))}%`;
+      energyBar.style.width = `${Math.min(100, Math.max(0, ePercent))}%`;
+
+      const happinessLow = hPercent <= 30;
+      const energyLow = ePercent <= 30;
+
+      actionText.innerText =
+        state.actionMode === "pet"
+          ? `Погладить (+${state.clickBase + state.clickBonus})`
+          : `Покормить (+${Math.round((state.clickBase + state.clickBonus) * 1.5)})`;
+
+      if (energyLow) {
+        energyText.style.color = "#f97373";
+      } else {
+        energyText.style.color = "#111827";
+      }
+
+      updateShopUI();
+    }
+
+    function updatePetUI() {
+      const { label, emoji } = getPetDisplay(state.petType);
+      petTypeLabel.textContent = label;
+      petEmojiEl.textContent = emoji || "🐾";
+      petNameLabel.textContent = state.petName || "Питомец";
+    }
+
+    function updateShopUI() {
+      const happiness = state.happiness;
+
+      if (state.items.ball) {
+        shopBallTag.textContent = "Куплено";
+        shopBallTag.style.color = "#16a34a";
+        shopButtons.ball.textContent = "Куплено";
+        shopButtons.ball.classList.add("disabled");
+        shopButtons.ball.disabled = true;
+      } else {
+        shopBallTag.textContent = "+5 к счастью за клик";
+        shopButtons.ball.textContent = "Купить";
+        shopButtons.ball.classList.remove("disabled");
+        shopButtons.ball.disabled = happiness < 30;
+      }
+
+      if (state.items.toy) {
+        shopToyTag.textContent = "Куплено";
+        shopToyTag.style.color = "#16a34a";
+        shopButtons.toy.textContent = "Куплено";
+        shopButtons.toy.classList.add("disabled");
+        shopButtons.toy.disabled = true;
+      } else {
+        shopToyTag.textContent = "+5 каждые 10 секунд";
+        shopButtons.toy.textContent = "Купить";
+        shopButtons.toy.classList.remove("disabled");
+        shopButtons.toy.disabled = happiness < 80;
+      }
+    }
+
+    function addHappiness(amount) {
+      const newValue = Math.max(0, Math.min(state.happiness + amount, state.happinessMax));
+      state.happiness = newValue;
+      updateStatsUI();
+      saveState();
+    }
+
+    function changeEnergy(amount) {
+      const newValue = Math.max(0, Math.min(state.energy + amount, state.energyMax));
+      state.energy = newValue;
+      updateStatsUI();
+      saveState();
+    }
+
+    function startEnergyDrain() {
+      if (energyIntervalId) clearInterval(energyIntervalId);
+      energyIntervalId = setInterval(() => {
+        if (state.energy > 0) {
+          changeEnergy(-1);
+        }
+      }, 10000);
+    }
+
+    function startAutoClicker() {
+      if (!state.items.toy) return;
+      if (autoClickIntervalId) clearInterval(autoClickIntervalId);
+      autoClickIntervalId = setInterval(() => {
+        addHappiness(5);
+        spawnHeartEffect();
+      }, 10000);
+    }
+
+    function spawnHeartEffect() {
+      const rect = petSpriteEl.getBoundingClientRect();
+      const heart = document.createElement("div");
+      heart.className = "pet-heart";
+      heart.textContent = "💛";
+      heart.style.left = "50%";
+      heart.style.bottom = "24%";
+      petStageEl.appendChild(heart);
+      setTimeout(() => {
+        petStageEl.removeChild(heart);
+      }, 800);
+    }
+
+    function performAction() {
+      const base = state.clickBase + state.clickBonus;
+      let reward = base;
+      let energyCost = 1;
+
+      const energyRatio = state.energy / state.energyMax;
+      if (state.energy <= 0) {
+        reward = Math.max(1, Math.round(base * 0.2));
+      } else if (energyRatio < 0.25) {
+        reward = Math.max(1, Math.round(base * 0.6));
+      }
+
+      if (state.actionMode === "feed") {
+        reward = Math.round(base * 1.5);
+        changeEnergy(+2);
+      }
+
+      addHappiness(reward);
+      changeEnergy(-energyCost);
+      animatePet();
+      spawnHeartEffect();
+    }
+
+    function animatePet() {
+      petSpriteEl.classList.remove("pet-bounce");
+      void petSpriteEl.offsetWidth;
+      petSpriteEl.classList.add("pet-bounce");
+    }
+
+    function tryBuyItem(id) {
+      const happiness = state.happiness;
+
+      if (id === "ball") {
+        const price = 30;
+        if (state.items.ball) return;
+        if (happiness < price) {
+          showAlert("Не хватает Счастья для покупки мячика 😿");
+          return;
+        }
+        state.happiness -= price;
+        state.items.ball = true;
+        state.clickBonus += 5;
+        showAlert("Мячик куплен! Теперь питомец получает больше Счастья за клик 🧶");
+      }
+
+      if (id === "toy") {
+        const price = 80;
+        if (state.items.toy) return;
+        if (happiness < price) {
+          showAlert("Не хватает Счастья для покупки игрушки-автокликера 🧸");
+          return;
+        }
+        state.happiness -= price;
+        state.items.toy = true;
+        showAlert("Игрушка-автокликер куплена! Питомец будет радоваться сам каждые 10 секунд ✨");
+        startAutoClicker();
+      }
+
+      updateStatsUI();
+      saveState();
+    }
+
+    function initUserInfo() {
+      if (!tg || !tg.initDataUnsafe || !tg.initDataUnsafe.user) {
+        userNameLabel.textContent = "Гость";
+        userAvatar.textContent = "🧸";
+        return;
+      }
+      const u = tg.initDataUnsafe.user;
+      const name = (u.first_name || "") + " " + (u.last_name || "");
+      const display = (name || u.username || "Гость").trim();
+      userNameLabel.textContent = display;
+      const firstChar = (display[0] || "🙂").toUpperCase();
+      userAvatar.textContent = firstChar;
+      if (petNameInput && !petNameInput.value) {
+        petNameInput.placeholder = `Например: ${display.split(" ")[0]} Jr.`;
+      }
+    }
+
+    function initFromState() {
+      if (state.petType && state.petName) {
+        updatePetUI();
+        updateStatsUI();
+        switchScreen("main");
+        startEnergyDrain();
+        if (state.items.toy) {
+          startAutoClicker();
+        }
+      } else {
+        switchScreen("select");
+      }
+    }
+
+    petCards.forEach((card) => {
+      card.addEventListener("click", () => {
+        const petType = card.getAttribute("data-pet");
+        state.petType = petType;
+        petCards.forEach((c) => c.classList.remove("selected"));
+        card.classList.add("selected");
+        btnToName.disabled = false;
+      });
+    });
+
+    btnToName.addEventListener("click", () => {
+      if (!state.petType) return;
+      const { label } = getPetDisplay(state.petType);
+      nameSubtitle.textContent = `Ваш ${label.replace(/^[^ ]+ /, "").toLowerCase()} ждёт имя.`;
+      switchScreen("name");
+    });
+
+    btnCreatePet.addEventListener("click", () => {
+      const name = petNameInput.value.trim();
+      if (!name) {
+        showAlert("Дайте питомцу имя — оно будет согревать его в вашем домике 🧡");
+        return;
+      }
+      state.petName = name;
+      state.happiness = Math.max(state.happiness, 0);
+      state.energy = state.energyMax;
+      updatePetUI();
+      updateStatsUI();
+      saveState();
+      switchScreen("main");
+      startEnergyDrain();
+      if (state.items.toy) {
+        startAutoClicker();
+      }
+    });
+
+    petNameInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        btnCreatePet.click();
+      }
+    });
+
+    btnPetAction.addEventListener("click", () => {
+      performAction();
+    });
+
+    btnChangeAction.addEventListener("click", () => {
+      if (state.actionMode === "pet") {
+        state.actionMode = "feed";
+        btnChangeAction.textContent = "🤗 Погладить";
+        actionEmoji.textContent = "🍪";
+      } else {
+        state.actionMode = "pet";
+        btnChangeAction.textContent = "🍪 Покормить";
+        actionEmoji.textContent = "🤗";
+      }
+      updateStatsUI();
+      saveState();
+    });
+
+    btnHint.addEventListener("click", () => {
+      const msg = [
+        "• Покупайте игрушки, чтобы повышать отдачу от кликов.",
+        "• Энергия падает со временем — когда она низкая, Счастья за клик меньше.",
+        "• Игрушка-автокликер даёт Счастье каждые 10 секунд даже без действий.",
+      ].join("\n");
+      showAlert(msg);
+    });
+
+    btnOpenShop.addEventListener("click", () => {
+      shopOverlay.classList.remove("hidden");
+      updateShopUI();
+    });
+
+    btnCloseShop.addEventListener("click", () => {
+      shopOverlay.classList.add("hidden");
+    });
+
+    shopOverlay.addEventListener("click", (e) => {
+      if (e.target === shopOverlay) {
+        shopOverlay.classList.add("hidden");
+      }
+    });
+
+    shopButtons.ball.addEventListener("click", () => {
+      tryBuyItem("ball");
+    });
+
+    shopButtons.toy.addEventListener("click", () => {
+      tryBuyItem("toy");
+    });
+
+    if (closeBtn) {
+      closeBtn.addEventListener("click", () => {
+        if (tg && tg.close) {
+          tg.close();
+        } else {
+          showAlert("В реальном Telegram Mini App окно закроется. Здесь закрыть нельзя 🙂");
+        }
+      });
+    }
+
+    loadState();
+    initUserInfo();
+    initFromState();
+  })();
+</script>
+</body>
+</html>
 
