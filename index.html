@@ -2,30 +2,26 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>Homescapes Pet & Match-3 TWA</title>
+  <title>Homescape Pet & Match-3</title>
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
-  <!-- Telegram WebApp -->
+  <!-- Telegram WebApp JS -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <style>
     :root {
-      --bg-main: #f9f3ef;
+      --bg-main: #f9f4f0;
       --bg-card: #ffffff;
+      --bg-soft: #ffe9d6;
       --accent: #ff9f6b;
-      --accent-strong: #ff7a5c;
+      --accent-strong: #ff7b7b;
       --accent-soft: rgba(255, 159, 107, 0.18);
       --text-main: #2f3542;
       --text-soft: #6b7280;
-      --coin-color: #fbbf24;
-      --good: #22c55e;
-      --bad: #f97373;
-      --shadow-soft: 0 16px 40px rgba(0, 0, 0, 0.18);
-      --radius-lg: 22px;
-      --radius-xl: 26px;
-      --safe-top: env(safe-area-inset-top, 12px);
-      --safe-bottom: env(safe-area-inset-bottom, 12px);
+      --radius-xl: 24px;
+      --radius-lg: 18px;
+      --shadow-soft: 0 16px 36px rgba(15, 23, 42, 0.24);
     }
 
     * {
@@ -39,7 +35,7 @@
       width: 100%;
       height: 100%;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top, #ffe9d2 0, #f9f3ef 45%, #f0e4dd 100%);
+      background: radial-gradient(circle at top, #ffe7cf 0, #f9f4f0 40%, #f1e3dd 100%);
       color: var(--text-main);
     }
 
@@ -52,54 +48,84 @@
     .app {
       position: relative;
       width: 100%;
-      max-width: 480px;
+      max-width: 520px;
       height: 100vh;
       height: 100dvh;
-      padding: calc(var(--safe-top) + 8px) 12px calc(var(--safe-bottom) + 8px) 12px;
+      padding: calc(10px + env(safe-area-inset-top, 10px))
+               12px
+               calc(12px + env(safe-area-inset-bottom, 16px));
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
 
-    /* Header (учёт панели Telegram) */
+    /* HEADER */
     .app-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 6px 10px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.9);
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+      background: rgba(255, 255, 255, 0.85);
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
       backdrop-filter: blur(14px);
+      z-index: 3;
     }
 
     .header-left {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
+      min-width: 0;
     }
 
-    .header-btn {
+    .close-btn {
+      width: 30px;
+      height: 30px;
       border-radius: 999px;
       border: none;
       outline: none;
-      padding: 6px 8px;
       cursor: pointer;
-      background: rgba(15, 23, 42, 0.04);
+      background: rgba(148, 163, 184, 0.15);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 14px;
+      font-size: 15px;
     }
 
-    .header-title {
-      font-size: 13px;
+    .user-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.95);
+    }
+
+    .user-avatar {
+      width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      background: linear-gradient(135deg, #ff9f6b, #ff6f91);
+      color: #fff;
+    }
+
+    .user-name {
+      max-width: 110px;
+      font-size: 12px;
       font-weight: 600;
       color: var(--text-soft);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .header-right {
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 4px;
       padding: 4px 10px;
@@ -110,52 +136,41 @@
       font-weight: 700;
     }
 
-    .coin-circle {
-      width: 18px;
-      height: 18px;
-      border-radius: 999px;
-      background: radial-gradient(circle at 30% 20%, #fff7d6 0, #fbbf24 55%, #f59e0b 100%);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      color: #78350f;
-      font-weight: 900;
-    }
-
-    /* Screen container */
+    /* SCREENS */
     .screens {
-      flex: 1;
       position: relative;
-      overflow: hidden;
+      flex: 1;
+      min-height: 0;
       border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-soft);
+      background: linear-gradient(145deg, #fffaf4, #ffffff);
+      overflow: hidden;
     }
 
     .screen {
       position: absolute;
       inset: 0;
       display: none;
-      padding: 8px 4px 4px 4px;
-      transform: translateX(10px);
-      opacity: 0;
-      transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+      overflow-y: auto;
+      padding: 10px 10px 12px;
     }
 
     .screen.active {
       display: block;
-      opacity: 1;
-      transform: translateX(0);
     }
 
-    /* Generic card */
+    .screen-inner {
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
     .card {
-      position: relative;
-      height: 100%;
       border-radius: var(--radius-xl);
-      background: linear-gradient(145deg, #fff7ee, #ffffff);
-      box-shadow: var(--shadow-soft);
-      padding: 14px 12px 12px 12px;
+      background: linear-gradient(145deg, #fffaf4, #ffffff);
+      padding: 14px 12px 10px;
+      position: relative;
       overflow: hidden;
     }
 
@@ -164,33 +179,31 @@
       position: absolute;
       inset: -40%;
       background-image:
-        radial-gradient(circle at 10% 0%, rgba(255, 171, 96, 0.18) 0, transparent 52%),
-        radial-gradient(circle at 90% 0%, rgba(96, 153, 255, 0.12) 0, transparent 55%),
-        radial-gradient(circle at 0% 90%, rgba(135, 255, 167, 0.16) 0, transparent 45%),
-        radial-gradient(circle at 100% 90%, rgba(255, 171, 193, 0.15) 0, transparent 50%);
-      opacity: 0.95;
+        radial-gradient(circle at 0 0, rgba(255, 180, 117, 0.2) 0, transparent 55%),
+        radial-gradient(circle at 100% 0, rgba(126, 196, 255, 0.18) 0, transparent 60%),
+        radial-gradient(circle at 0 100%, rgba(135, 255, 167, 0.16) 0, transparent 45%),
+        radial-gradient(circle at 100% 100%, rgba(255, 171, 193, 0.16) 0, transparent 50%);
+      opacity: 0.9;
       pointer-events: none;
     }
 
-    .card-inner {
+    .card-content {
       position: relative;
       z-index: 1;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
     }
 
-    .card-header {
+    .card-title-row {
       display: flex;
-      flex-direction: column;
-      gap: 4px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 4px;
     }
 
     .card-title {
       font-size: 18px;
       font-weight: 700;
-      color: #3b4256;
+      color: #374151;
       display: flex;
       align-items: center;
       gap: 6px;
@@ -201,186 +214,154 @@
       color: var(--text-soft);
     }
 
+    .footer-sticky {
+      margin-top: auto;
+      position: sticky;
+      bottom: 0;
+      padding-top: 6px;
+      background: linear-gradient(to top,
+        rgba(249, 244, 240, 0.95),
+        rgba(249, 244, 240, 0.7),
+        transparent);
+    }
+
     .btn-primary {
+      width: 100%;
       border-radius: 999px;
-      padding: 12px 14px;
       border: none;
       outline: none;
       cursor: pointer;
-      width: 100%;
-      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-      color: #fff;
+      padding: 14px 16px;
+      font-size: 15px;
       font-weight: 700;
-      font-size: 14px;
+      background: linear-gradient(135deg, #ff9f6b, #ff7b7b);
+      color: #fff;
+      box-shadow: 0 14px 30px rgba(254, 140, 101, 0.5);
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
-      box-shadow: 0 14px 32px rgba(255, 140, 101, 0.45);
     }
 
     .btn-primary:active {
       transform: translateY(1px) scale(0.99);
-      box-shadow: 0 6px 16px rgba(255, 140, 101, 0.35);
+      box-shadow: 0 8px 18px rgba(254, 140, 101, 0.4);
     }
 
     .btn-primary:disabled {
-      opacity: 0.6;
+      opacity: 0.5;
       box-shadow: none;
       cursor: default;
     }
 
     .btn-secondary {
       border-radius: 999px;
-      padding: 8px 12px;
       border: none;
       outline: none;
       cursor: pointer;
-      background: rgba(255, 255, 255, 0.9);
-      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.06);
+      padding: 8px 12px;
       font-size: 13px;
       font-weight: 600;
-      color: #4b5563;
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.15);
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
+      color: #374151;
     }
 
     .btn-secondary:active {
       transform: translateY(1px);
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2);
     }
 
-    /* Pet selection */
-    .pet-select-grid {
-      margin-top: 8px;
+    /* PET SELECT */
+    .pet-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 8px;
-      flex: 1;
+      margin-top: 8px;
     }
 
     .pet-card {
-      position: relative;
       border-radius: 20px;
-      padding: 8px 6px 10px 6px;
-      background: linear-gradient(145deg, #ffffff, #ffe7cf);
-      box-shadow: 0 10px 26px rgba(255, 159, 107, 0.25);
-      cursor: pointer;
+      padding: 8px 6px;
+      background: linear-gradient(145deg, #ffffff, #ffe6c8);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
       border: 2px solid transparent;
-      transition: transform 0.14s ease, box-shadow 0.14s ease, border 0.14s ease, background 0.14s ease;
+      cursor: pointer;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 4px;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, border 0.12s ease;
     }
 
     .pet-card:hover {
       transform: translateY(-2px);
-      box-shadow: 0 16px 30px rgba(255, 159, 107, 0.34);
+      box-shadow: 0 12px 24px rgba(255, 159, 107, 0.32);
     }
 
     .pet-card.selected {
       border-color: var(--accent-strong);
-      background: linear-gradient(145deg, #fff0dc, #ffe2c3);
-      box-shadow: 0 16px 34px rgba(255, 159, 107, 0.4);
+      box-shadow: 0 14px 28px rgba(255, 159, 107, 0.45);
     }
 
-    /* “Нарисованный” питомец — чисто CSS */
-    .pet-sprite-preview {
-      width: 74px;
-      height: 74px;
+    .pet-sprite {
+      width: 70px;
+      height: 70px;
       border-radius: 24px;
-      background: radial-gradient(circle at 30% 10%, #ffffff 0, #ffe2c5 45%, #ffb784 100%);
-      position: relative;
-      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.85),
-                  0 10px 22px rgba(0, 0, 0, 0.18);
+      background: radial-gradient(circle at 30% 10%, #ffffff 0, #ffe0c4 50%, #ffb37f 100%);
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.7),
+                  0 8px 16px rgba(0, 0, 0, 0.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       overflow: hidden;
+      position: relative;
     }
 
-    .pet-sprite-head {
+    .pet-sprite::after {
+      content: "";
       position: absolute;
-      bottom: 6px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 52px;
-      height: 46px;
-      border-radius: 50px;
-      background: radial-gradient(circle at 30% 10%, #ffe9d0 0, #ffc48b 60%, #f89c62 100%);
-      box-shadow: 0 5px 10px rgba(0, 0, 0, 0.16);
+      top: -40%;
+      left: -20%;
+      width: 140%;
+      height: 60%;
+      background: linear-gradient(to bottom, rgba(255, 255, 255, 1), transparent);
+      opacity: 0.9;
     }
 
-    .pet-sprite-ear {
-      position: absolute;
-      top: -10px;
-      width: 18px;
-      height: 22px;
-      border-radius: 50% 50% 40% 40%;
-      background: radial-gradient(circle at 30% 10%, #ffe9d0 0, #f9b376 70%);
+    .pet-emoji {
+      font-size: 40px;
+      position: relative;
+      z-index: 1;
+      animation: float-pet 2.3s ease-in-out infinite;
     }
 
-    .pet-sprite-ear.left { left: 2px; transform: rotate(-12deg); }
-    .pet-sprite-ear.right { right: 2px; transform: rotate(12deg); }
-
-    .pet-sprite-face {
-      position: absolute;
-      inset: 10px 8px 10px 8px;
+    .pet-name-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #374151;
     }
 
-    .pet-eye {
-      position: absolute;
-      top: 10px;
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #1f2933;
-      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
-    }
-    .pet-eye.left { left: 12px; }
-    .pet-eye.right { right: 12px; }
-
-    .pet-blush {
-      position: absolute;
-      top: 20px;
-      width: 10px;
-      height: 6px;
-      border-radius: 50%;
-      background: rgba(252, 165, 165, 0.7);
-    }
-    .pet-blush.left { left: 6px; }
-    .pet-blush.right { right: 6px; }
-
-    .pet-mouth {
-      position: absolute;
-      bottom: 8px;
-      left: 50%;
-      width: 16px;
-      height: 8px;
-      border-radius: 0 0 14px 14px;
-      border-bottom: 2px solid #1f2933;
-      border-left: 2px solid transparent;
-      border-right: 2px solid transparent;
-      transform: translateX(-50%);
-    }
-
-    .pet-body-tag {
-      font-size: 12px;
-      font-weight: 600;
-      color: #3f3d56;
-    }
-
-    .pet-body-sub {
+    .pet-tag {
       font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.75);
       color: var(--text-soft);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
 
-    /* Pet_NAME screen */
     .form-group {
-      margin-top: 8px;
+      margin-top: 10px;
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 6px;
     }
 
     .form-label {
@@ -392,227 +373,150 @@
     .form-input {
       border-radius: 999px;
       border: 1.5px solid rgba(148, 163, 184, 0.5);
-      padding: 9px 12px;
+      padding: 10px 14px;
       font-size: 14px;
       outline: none;
-      background: rgba(255, 255, 255, 0.9);
-      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.05);
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
     }
 
     .form-input:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px rgba(255, 159, 107, 0.45);
+      border-color: #ff9f6b;
+      box-shadow: 0 0 0 1px rgba(255, 159, 107, 0.5);
     }
 
-    /* Main pet screen */
-    .pet-main-header {
+    /* PET MAIN */
+    .pet-header-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
+      margin-bottom: 4px;
     }
 
     .pet-name-chip {
-      margin: 0 auto;
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.92);
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
-      font-size: 13px;
+      flex: 1;
+      text-align: center;
+      font-size: 16px;
       font-weight: 700;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
+      color: #374151;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 6px 12px rgba(15, 23, 42, 0.12);
     }
 
-    .pet-mood-indicator {
-      padding: 4px 8px;
-      border-radius: 999px;
-      font-size: 11px;
+    .coin-chip {
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      background: rgba(255, 255, 255, 0.92);
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 6px 12px rgba(15, 23, 42, 0.12);
+      font-size: 13px;
+      font-weight: 600;
     }
 
-    .pet-main-layout {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-top: 6px;
+    .coin-chip span:first-child {
+      font-size: 16px;
     }
 
     .pet-stage-wrap {
-      flex: 1;
+      margin-top: 6px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .pet-stage {
+      width: 230px;
+      max-width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 32px;
+      background: radial-gradient(circle at 50% 10%, #fffdf9 0, #ffe0c5 50%, #ffb37f 100%);
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.35);
+      position: relative;
+      overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
-    .pet-stage {
-      width: 220px;
-      max-width: 90%;
-      aspect-ratio: 1 / 1;
-      border-radius: 30px;
-      background: radial-gradient(circle at 50% 15%, #fff9f4 0, #ffe4c7 45%, #ffc48b 100%);
-      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
+    .pet-floor {
+      position: absolute;
+      inset-inline: -20%;
+      bottom: -6%;
+      height: 40%;
+      background:
+        radial-gradient(circle at 20% 0, rgba(255, 255, 255, 0.8) 0, transparent 60%),
+        radial-gradient(circle at 80% 0, rgba(255, 255, 255, 0.9) 0, transparent 60%),
+        radial-gradient(circle at 50% 30%, rgba(0, 0, 0, 0.18) 0, transparent 70%);
+      opacity: 0.8;
+    }
+
+    .pet-main-sprite {
+      width: 130px;
+      height: 130px;
+      border-radius: 40px;
+      background: radial-gradient(circle at 30% 10%, #ffffff 0, #ffe3c9 50%, #ffb47f 100%);
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.9),
+                  0 16px 32px rgba(15, 23, 42, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       position: relative;
       overflow: hidden;
     }
 
-    .pet-stage-floor {
-      position: absolute;
-      inset-inline: -20%;
-      bottom: -6%;
-      height: 42%;
-      background:
-        radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.8) 0, transparent 55%),
-        radial-gradient(circle at 80% 0%, rgba(255, 255, 255, 0.9) 0, transparent 60%),
-        radial-gradient(circle at 50% 20%, rgba(0, 0, 0, 0.14) 0, transparent 70%);
-      opacity: 0.6;
+    .pet-main-emoji {
+      font-size: 64px;
+      position: relative;
+      z-index: 2;
+      animation: idle-breathe 2.5s ease-in-out infinite;
     }
 
-    .pet-main-sprite {
+    .pet-main-highlight {
       position: absolute;
+      top: -40%;
+      left: -10%;
+      width: 130%;
+      height: 60%;
+      background: linear-gradient(to bottom, rgba(255, 255, 255, 1), transparent);
+      opacity: 0.9;
+      z-index: 1;
+    }
+
+    .pet-heart {
+      position: absolute;
+      font-size: 26px;
+      animation: heart-pop 0.8s ease-out forwards;
+      pointer-events: none;
       left: 50%;
-      bottom: 16%;
+      bottom: 24%;
       transform: translateX(-50%);
-      width: 130px;
-      height: 124px;
     }
 
-    .pet-main-body {
-      position: absolute;
-      inset: 0;
-      border-radius: 42px;
-      background: radial-gradient(circle at 30% 5%, #ffffff 0, #ffe4c2 45%, #ffb784 100%);
-      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.85),
-                  0 16px 28px rgba(0, 0, 0, 0.28);
-      overflow: hidden;
+    .pet-bounce {
+      animation: pet-bounce 0.4s ease-out;
     }
 
-    .pet-main-head {
-      position: absolute;
-      bottom: 12px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 80px;
-      height: 70px;
-      border-radius: 50px;
-      background: radial-gradient(circle at 30% 10%, #ffe9d0 0, #ffc48b 60%, #f89c62 100%);
-      box-shadow: 0 5px 14px rgba(0, 0, 0, 0.24);
+    .mood-label {
+      margin-top: 4px;
+      font-size: 12px;
+      text-align: center;
+      color: var(--text-soft);
     }
 
-    .pet-main-ears {
-      position: absolute;
-      top: -16px;
-      left: 50%;
-      width: 80px;
-      transform: translateX(-50%);
-      height: 24px;
-    }
-
-    .pet-main-ear {
-      position: absolute;
-      width: 24px;
-      height: 24px;
-      border-radius: 60% 60% 40% 40%;
-      background: radial-gradient(circle at 30% 10%, #ffe9d0 0, #f9b376 70%);
-    }
-
-    .pet-main-ear.left { left: 0; transform: rotate(-10deg); }
-    .pet-main-ear.right { right: 0; transform: rotate(10deg); }
-
-    .pet-main-face {
-      position: absolute;
-      inset: 14px 10px 12px 10px;
-    }
-
-    .pet-main-eye {
-      position: absolute;
-      top: 14px;
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: #111827;
-      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.6);
-    }
-    .pet-main-eye.left { left: 16px; }
-    .pet-main-eye.right { right: 16px; }
-
-    .pet-main-blush {
-      position: absolute;
-      top: 26px;
-      width: 12px;
-      height: 7px;
-      border-radius: 50%;
-      background: rgba(252, 165, 165, 0.7);
-    }
-    .pet-main-blush.left { left: 8px; }
-    .pet-main-blush.right { right: 8px; }
-
-    .pet-main-mouth {
-      position: absolute;
-      bottom: 10px;
-      left: 50%;
-      width: 20px;
-      height: 10px;
-      transform: translateX(-50%);
-      border-radius: 0 0 20px 20px;
-      border-bottom: 2px solid #111827;
-    }
-
-    .pet-main-mouth.happy {
-      border-bottom-width: 3px;
-    }
-    .pet-main-mouth.sad {
-      height: 10px;
-      border-radius: 20px 20px 0 0;
-      border-bottom: none;
-      border-top: 2px solid #111827;
-      bottom: 6px;
-    }
-
-    .pet-main-idle {
-      animation: petIdle 2.8s ease-in-out infinite;
-    }
-
-    .pet-main-happy-anim {
-      animation: petHappy 0.6s ease-out;
-    }
-
-    .pet-main-sad-tone {
-      filter: grayscale(0.2) brightness(0.96);
-    }
-
-    .pet-main-happy-tone {
-      filter: saturate(1.2) brightness(1.02);
-    }
-
-    @keyframes petIdle {
-      0%   { transform: translate(-50%, 0) scale(1); }
-      40%  { transform: translate(-50%, -3px) scale(1.02); }
-      80%  { transform: translate(-50%, 0) scale(1); }
-      100% { transform: translate(-50%, 0) scale(1); }
-    }
-
-    @keyframes petHappy {
-      0% { transform: translate(-50%, 0) scale(1); }
-      30%{ transform: translate(-50%, -10px) scale(1.04); }
-      60%{ transform: translate(-50%, 2px) scale(0.98); }
-      100%{transform: translate(-50%, 0) scale(1); }
-    }
-
-    /* Stats */
-    .stats-panel {
+    /* STATS */
+    .stats {
+      margin-top: 8px;
+      border-radius: var(--radius-lg);
       background: rgba(255, 255, 255, 0.95);
-      border-radius: 18px;
-      padding: 8px;
-      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.12);
+      padding: 8px 8px 6px;
+      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12);
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
     }
 
     .stat-row {
@@ -625,25 +529,21 @@
       width: 26px;
       height: 26px;
       border-radius: 999px;
-      background: rgba(248, 250, 252, 0.9);
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.16);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 13px;
+      font-size: 16px;
     }
 
     .stat-content {
       flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      font-size: 11px;
     }
 
     .stat-label-row {
+      font-size: 11px;
       display: flex;
-      align-items: center;
       justify-content: space-between;
       color: var(--text-soft);
     }
@@ -653,72 +553,70 @@
     }
 
     .stat-bar {
-      position: relative;
+      margin-top: 2px;
       width: 100%;
       height: 10px;
       border-radius: 999px;
       background: rgba(229, 231, 235, 0.9);
       overflow: hidden;
+      position: relative;
     }
 
-    .stat-bar-fill {
+    .stat-fill {
       position: absolute;
       inset-block: 0;
       left: 0;
-      width: 40%;
+      width: 50%;
       border-radius: inherit;
-      background: linear-gradient(90deg, #4ade80, #22c55e);
-      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6);
+      background: linear-gradient(90deg, #ff9f6b, #ff7b7b);
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.7);
       transition: width 0.22s ease-out;
     }
 
-    .stat-bar-fill.mood {
-      background: linear-gradient(90deg, #fb7185, #f97316);
+    .stat-fill.mood {
+      background: linear-gradient(90deg, #a5b4fc, #f97373);
     }
 
-    /* Bottom pet buttons */
-    .pet-bottom-bar {
+    /* PET BOTTOM PANEL */
+    .pet-bottom {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .pet-bottom-row {
       display: flex;
       gap: 8px;
-      margin-top: 4px;
     }
 
-    .pet-bottom-bar .btn-primary {
-      flex: 2;
-      padding-block: 11px;
-      font-size: 14px;
-    }
-
-    .pet-bottom-bar .btn-secondary {
+    .pet-bottom-row .btn-secondary {
       flex: 1;
-      padding-block: 9px;
-      font-size: 12px;
     }
 
-    /* Shop */
-    .shop-overlay {
+    /* SHOP */
+    .overlay {
       position: fixed;
       inset: 0;
+      background: rgba(15, 23, 42, 0.3);
       display: none;
       justify-content: center;
       align-items: flex-end;
-      padding: 0 10px calc(var(--safe-bottom) + 8px) 10px;
-      background: rgba(15, 23, 42, 0.35);
+      padding: 0 12px calc(12px + env(safe-area-inset-bottom, 16px));
       z-index: 20;
     }
 
-    .shop-overlay.visible {
+    .overlay.visible {
       display: flex;
     }
 
     .shop-panel {
       width: 100%;
-      max-width: 480px;
+      max-width: 520px;
       border-radius: 24px 24px 0 0;
       background: #fff7ee;
-      box-shadow: 0 -16px 40px rgba(0, 0, 0, 0.35);
-      padding: 10px 12px;
-      max-height: 70vh;
+      box-shadow: 0 -16px 40px rgba(15, 23, 42, 0.5);
+      padding: 10px 12px 10px;
       display: flex;
       flex-direction: column;
       gap: 8px;
@@ -726,435 +624,347 @@
 
     .shop-header {
       display: flex;
-      align-items: center;
       justify-content: space-between;
+      align-items: center;
       gap: 8px;
     }
 
+    .shop-title {
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
     .shop-tabs {
-      display: inline-flex;
-      background: rgba(248, 250, 252, 0.9);
-      border-radius: 999px;
-      padding: 2px;
+      display: flex;
+      gap: 6px;
+      margin-top: 4px;
     }
 
     .shop-tab {
+      flex: 1;
       border-radius: 999px;
       padding: 6px 10px;
-      font-size: 12px;
+      font-size: 13px;
+      font-weight: 600;
       border: none;
+      outline: none;
       cursor: pointer;
-      background: transparent;
-      color: var(--text-soft);
+      background: rgba(255, 255, 255, 0.9);
+      color: #4b5563;
+      box-shadow: 0 6px 12px rgba(15, 23, 42, 0.1);
     }
 
     .shop-tab.active {
-      background: #ffffff;
-      color: #111827;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
-      font-weight: 600;
-    }
-
-    .shop-balance {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.95);
-      font-size: 12px;
-      color: var(--text-soft);
+      background: linear-gradient(135deg, #ff9f6b, #ff7b7b);
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(254, 140, 101, 0.5);
     }
 
     .shop-items {
-      flex: 1;
+      margin-top: 4px;
+      max-height: 45vh;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
       gap: 8px;
-      margin-top: 4px;
+      padding-right: 2px;
     }
 
     .shop-item {
       border-radius: 18px;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), #ffe4c9);
-      padding: 8px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), #ffe6c8);
+      padding: 8px 8px 8px;
       display: flex;
-      gap: 10px;
+      gap: 8px;
       align-items: center;
-      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.14);
     }
 
     .shop-icon {
       width: 40px;
       height: 40px;
       border-radius: 16px;
-      background: radial-gradient(circle at 30% 10%, #ffffff 0, #ffd1a7 50%, #ffb370 100%);
-      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
-      position: relative;
-      overflow: hidden;
+      background: radial-gradient(circle at 30% 10%, #ffffff 0, #ffd7aa 50%, #ffb779 100%);
+      box-shadow: 0 8px 16px rgba(15, 23, 42, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
     }
 
-    /* простые “ручные” спрайты еды/игрушек */
-    .icon-fish,
-    .icon-ball,
-    .icon-cake {
-      position: absolute;
-      inset: 6px;
-    }
-
-    /* рыба */
-    .icon-fish-body {
-      position: absolute;
-      left: 4px;
-      top: 8px;
-      width: 22px;
-      height: 14px;
-      border-radius: 20px;
-      background: linear-gradient(90deg, #38bdf8, #0ea5e9);
-    }
-
-    .icon-fish-tail {
-      position: absolute;
-      right: 2px;
-      top: 7px;
-      width: 10px;
-      height: 16px;
-      background: linear-gradient(90deg, #0ea5e9, #0369a1);
-      clip-path: polygon(0 50%, 100% 0, 100% 100%);
-    }
-
-    .icon-fish-eye {
-      position: absolute;
-      left: 8px;
-      top: 11px;
-      width: 3px;
-      height: 3px;
-      border-radius: 50%;
-      background: #0f172a;
-    }
-
-    /* мячик */
-    .icon-ball-disc {
-      position: absolute;
-      inset: 5px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 30% 20%, #ffffff 0, #f97316 50%, #ea580c 100%);
-    }
-
-    .icon-ball-line {
-      position: absolute;
-      inset: 10px;
-      border-radius: 50%;
-      border: 2px solid rgba(255, 255, 255, 0.85);
-    }
-
-    /* торт */
-    .icon-cake-layer {
-      position: absolute;
-      left: 4px;
-      right: 4px;
-      bottom: 6px;
-      height: 14px;
-      border-radius: 4px;
-      background: #fed7aa;
-    }
-
-    .icon-cake-top {
-      position: absolute;
-      left: 4px;
-      right: 4px;
-      bottom: 16px;
-      height: 8px;
-      border-radius: 6px 6px 2px 2px;
-      background: #fb7185;
-    }
-
-    .icon-cake-candle {
-      position: absolute;
-      left: 50%;
-      bottom: 24px;
-      width: 3px;
-      height: 8px;
-      transform: translateX(-50%);
-      background: #e5e7eb;
-    }
-
-    .icon-cake-flame {
-      position: absolute;
-      left: 50%;
-      bottom: 32px;
-      width: 5px;
-      height: 7px;
-      transform: translateX(-50%);
-      border-radius: 50%;
-      background: radial-gradient(circle at 30% 10%, #fef3c7 0, #f97316 80%);
-    }
-
-    .shop-content {
+    .shop-body {
       flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 2px;
     }
 
-    .shop-item-title {
+    .shop-name {
       font-size: 14px;
       font-weight: 700;
       color: #374151;
     }
 
-    .shop-item-desc {
-      font-size: 12px;
+    .shop-desc {
+      font-size: 11px;
       color: var(--text-soft);
     }
 
     .shop-meta {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
       margin-top: 2px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       font-size: 11px;
+      color: var(--text-soft);
     }
 
-    .shop-price-chip {
+    .shop-price {
       padding: 2px 8px;
       border-radius: 999px;
       background: rgba(255, 255, 255, 0.95);
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      color: var(--text-soft);
     }
 
-    .shop-effect-chip {
+    .shop-effect {
       padding: 2px 8px;
       border-radius: 999px;
       background: rgba(255, 255, 255, 0.8);
-      color: #16a34a;
     }
 
-    .shop-actions {
+    .shop-action {
       display: flex;
-      align-items: center;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 4px;
     }
 
     .shop-btn {
       border-radius: 999px;
-      padding: 6px 10px;
       border: none;
       outline: none;
       cursor: pointer;
-      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-      color: #fff;
+      padding: 6px 10px;
       font-size: 12px;
       font-weight: 600;
-      box-shadow: 0 8px 18px rgba(255, 159, 107, 0.45);
+      background: linear-gradient(135deg, #ff9f6b, #ff7b7b);
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(254, 140, 101, 0.5);
     }
 
-    .shop-btn:disabled {
-      opacity: 0.55;
+    .shop-btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 4px 10px rgba(254, 140, 101, 0.4);
+    }
+
+    .shop-btn.disabled {
+      opacity: 0.5;
       box-shadow: none;
       cursor: default;
+      background: rgba(148, 163, 184, 0.45);
     }
 
     .shop-footer {
+      margin-top: 6px;
       display: flex;
       justify-content: flex-end;
-      margin-top: 4px;
     }
 
-    /* Level select (3-in-row) */
-    .levels-grid {
-      flex: 1;
+    /* LEVEL SELECT */
+    .level-grid {
+      margin-top: 8px;
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 8px;
-      margin-top: 6px;
     }
 
     .level-card {
       border-radius: 16px;
-      background: rgba(255, 255, 255, 0.96);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-      padding: 6px 4px 6px 4px;
-      text-align: center;
+      padding: 8px 6px;
+      background: linear-gradient(145deg, #ffffff, #e6f4ff);
+      box-shadow: 0 8px 16px rgba(15, 23, 42, 0.16);
       cursor: pointer;
-      font-size: 11px;
       display: flex;
       flex-direction: column;
-      gap: 4px;
       align-items: center;
-      justify-content: center;
+      gap: 4px;
     }
 
-    .level-card .lvl-number {
-      font-size: 14px;
+    .level-card.locked {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    .level-badge {
+      width: 32px;
+      height: 32px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.96);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-weight: 700;
+      box-shadow: 0 6px 12px rgba(15, 23, 42, 0.14);
+    }
+
+    .level-name {
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .level-meta {
+      font-size: 11px;
+      color: var(--text-soft);
+      text-align: center;
+    }
+
+    /* MATCH-3 */
+    .match-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .match-info-chip {
+      border-radius: 999px;
+      padding: 4px 10px;
+      background: rgba(255, 255, 255, 0.95);
+      font-size: 11px;
+      color: var(--text-soft);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 6px 12px rgba(15, 23, 42, 0.12);
+    }
+
+    .match-info-chip strong {
       color: #374151;
     }
 
-    .level-card .lvl-tag {
-      padding: 2px 6px;
-      border-radius: 999px;
-      font-size: 10px;
-      background: rgba(248, 250, 252, 1);
-      color: var(--text-soft);
-    }
-
-    .level-card.completed {
-      border: 2px solid var(--accent-strong);
-    }
-
-    /* Match-3 board */
-    .match3-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      font-size: 12px;
-    }
-
-    .match3-info-chip {
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.95);
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      color: var(--text-soft);
-    }
-
-    .match3-board-wrap {
-      flex: 1;
+    .match-board-wrap {
+      margin-top: 4px;
+      border-radius: 20px;
+      padding: 8px 6px 10px;
+      background: radial-gradient(circle at top, #fff, #f5e0ff);
+      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.18);
       display: flex;
       justify-content: center;
-      align-items: center;
-      margin-top: 8px;
     }
 
-    .match3-board {
-      position: relative;
-      background: rgba(255, 255, 255, 0.95);
-      border-radius: 18px;
-      padding: 4px;
-      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.16);
+    .match-board {
       display: grid;
+      gap: 4px;
+      justify-content: center;
       touch-action: manipulation;
     }
 
-    .cell {
-      width: 32px;
-      height: 32px;
-      margin: 2px;
-      border-radius: 10px;
-      background: #e5e7eb;
-      position: relative;
-      overflow: hidden;
+    .match-cell {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: 0 4px 8px rgba(15, 23, 42, 0.16);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease, opacity 0.15s ease;
     }
 
-    .cell.empty {
-      background: transparent;
+    .match-cell.empty {
+      opacity: 0;
+      pointer-events: none;
       box-shadow: none;
     }
 
-    .tile {
-      width: 100%;
-      height: 100%;
-      border-radius: 10px;
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.16);
-      position: relative;
-      transform-origin: center;
-      transition: transform 0.18s ease-out;
+    .match-cell.selected {
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 8px 18px rgba(59, 130, 246, 0.6);
+      background: rgba(239, 246, 255, 0.96);
     }
 
-    .tile.selected {
-      transform: scale(1.08);
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.28);
+    .match-cell.remove {
+      animation: cell-pop 0.3s ease-out forwards;
     }
 
-    .tile.type-0 { background: radial-gradient(circle at 30% 20%, #fff7ed 0, #f97316 55%, #ea580c 100%); }
-    .tile.type-1 { background: radial-gradient(circle at 30% 20%, #fef9c3 0, #facc15 55%, #eab308 100%); }
-    .tile.type-2 { background: radial-gradient(circle at 30% 20%, #f0fdf4 0, #22c55e 55%, #16a34a 100%); }
-    .tile.type-3 { background: radial-gradient(circle at 30% 20%, #eef2ff 0, #6366f1 55%, #4f46e5 100%); }
-    .tile.type-4 { background: radial-gradient(circle at 30% 20%, #fee2e2 0, #fb7185 55%, #f43f5e 100%); }
-    .tile.type-5 { background: radial-gradient(circle at 30% 20%, #f5f3ff 0, #a855f7 55%, #7e22ce 100%); }
-
-    .tile-clearing {
-      animation: tileClear 0.25s ease-out forwards;
+    .match-message {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--text-soft);
+      text-align: center;
     }
 
-    .tile-new {
-      animation: tileFall 0.3s ease-out;
-    }
-
-    @keyframes tileClear {
-      0% { transform: scale(1); opacity: 1; }
-      100% { transform: scale(0.4); opacity: 0; }
-    }
-
-    @keyframes tileFall {
-      0% { transform: translateY(-20px); opacity: 0; }
-      100% { transform: translateY(0); opacity: 1; }
-    }
-
-    .match3-footer {
+    .match-bottom {
       margin-top: 8px;
       display: flex;
-      justify-content: space-between;
       gap: 8px;
     }
 
-    /* Overlay result */
-    .overlay-center {
-      position: absolute;
-      inset: 0;
-      display: none;
-      justify-content: center;
-      align-items: center;
-      background: rgba(15, 23, 42, 0.35);
-      z-index: 10;
+    .match-bottom .btn-secondary {
+      flex: 1;
     }
 
-    .overlay-center.visible {
-      display: flex;
+    /* TEXT UTIL */
+    .text-soft { color: var(--text-soft); font-size: 12px; }
+    .mt-xs { margin-top: 4px; }
+    .mt-s { margin-top: 8px; }
+
+    /* ANIMATIONS */
+    @keyframes float-pet {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+      100% { transform: translateY(0); }
     }
 
-    .overlay-card {
-      border-radius: 20px;
-      background: #fff7ee;
-      padding: 16px 14px;
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
-      text-align: center;
-      max-width: 260px;
+    @keyframes idle-breathe {
+      0% { transform: translateY(0) scale(1); }
+      40% { transform: translateY(-2px) scale(1.02); }
+      80% { transform: translateY(0) scale(1); }
+      100% { transform: translateY(0) scale(1); }
     }
 
-    .overlay-card h3 {
-      margin: 0 0 6px 0;
-      font-size: 16px;
+    @keyframes pet-bounce {
+      0% { transform: translateY(0) scale(1); }
+      30% { transform: translateY(-12px) scale(1.06); }
+      60% { transform: translateY(4px) scale(0.96); }
+      100% { transform: translateY(0) scale(1); }
     }
 
-    .overlay-card p {
-      margin: 0 0 10px 0;
-      font-size: 13px;
-      color: var(--text-soft);
+    @keyframes heart-pop {
+      0% { transform: translate(-50%, -10px) scale(0.6); opacity: 0; }
+      20% { opacity: 1; }
+      100% { transform: translate(-50%, -42px) scale(1.2); opacity: 0; }
     }
 
-    .text-soft {
-      color: var(--text-soft);
+    @keyframes cell-pop {
+      0%   { transform: scale(1); opacity: 1; }
+      70%  { transform: scale(1.2); opacity: 0.4; }
+      100% { transform: scale(0.3); opacity: 0; }
     }
 
-    @media (max-height: 650px) {
+    @media (max-height: 640px) {
       .pet-stage {
-        width: 190px;
+        width: 200px;
       }
       .pet-main-sprite {
-        width: 120px;
-        height: 112px;
+        width: 115px;
+        height: 115px;
       }
-      .cell {
-        width: 28px;
-        height: 28px;
+      .pet-main-emoji {
+        font-size: 56px;
+      }
+      .match-cell {
+        width: 30px;
+        height: 30px;
+        font-size: 20px;
       }
     }
   </style>
@@ -1164,273 +974,260 @@
   <!-- HEADER -->
   <header class="app-header">
     <div class="header-left">
-      <button class="header-btn" id="btnBackRoot" style="display:none;">←</button>
-      <div class="header-title" id="headerTitle">Домик питомца</div>
+      <button class="close-btn" id="btnClose">✕</button>
+      <div class="user-chip">
+        <div class="user-avatar" id="userAvatar">🧸</div>
+        <div class="user-name" id="userName">Гость</div>
+      </div>
     </div>
     <div class="header-right">
-      <div class="coin-circle">₵</div>
-      <span id="coinBalance">0</span>
+      <span>💰</span>
+      <span id="headerCoins">0</span>
     </div>
   </header>
 
   <!-- SCREENS -->
   <main class="screens">
-    <!-- 1. Выбор питомца -->
-    <section class="screen active" id="screen-select-pet">
-      <div class="card">
-        <div class="card-inner">
-          <div class="card-header">
-            <div class="card-title">Выбери питомца</div>
-            <div class="card-subtitle">
-              Ваш новый сосед по дому в стиле Homescapes уже ждёт вас.
+    <!-- SCREEN: Select pet -->
+    <section class="screen active" id="screen-pet-select">
+      <div class="screen-inner">
+        <div class="card">
+          <div class="card-content">
+            <div class="card-title-row">
+              <div class="card-title">
+                Выбери питомца
+                <span>🏡</span>
+              </div>
             </div>
-          </div>
+            <div class="card-subtitle">
+              Носик, хвост и море уюта — выберите с кем будете жить в домике.
+            </div>
 
-          <div class="pet-select-grid">
-            <!-- Кошка -->
-            <button class="pet-card" data-pet-type="cat" type="button">
-              <div class="pet-sprite-preview">
-                <div class="pet-sprite-head">
-                  <div class="pet-sprite-ear left"></div>
-                  <div class="pet-sprite-ear right"></div>
-                  <div class="pet-sprite-face">
-                    <div class="pet-eye left"></div>
-                    <div class="pet-eye right"></div>
-                    <div class="pet-blush left"></div>
-                    <div class="pet-blush right"></div>
-                    <div class="pet-mouth"></div>
-                  </div>
+            <div class="pet-grid">
+              <button class="pet-card" data-pet="cat" type="button">
+                <div class="pet-sprite">
+                  <div class="pet-emoji">🐱</div>
                 </div>
-              </div>
-              <div class="pet-body-tag">Кошка</div>
-              <div class="pet-body-sub">Пушистый наблюдатель</div>
-            </button>
+                <div class="pet-name-label">Кошка</div>
+                <div class="pet-tag">🧶 Ласковая</div>
+              </button>
 
-            <!-- Собака -->
-            <button class="pet-card" data-pet-type="dog" type="button">
-              <div class="pet-sprite-preview">
-                <div class="pet-sprite-head" style="border-radius:40px 40px 36px 36px;
-                background: radial-gradient(circle at 30% 10%, #fff3d3 0, #facc8f 60%, #f59e0b 100%);">
-                  <div class="pet-sprite-ear left" style="height:24px;background:linear-gradient(135deg,#fbbf24,#f97316)"></div>
-                  <div class="pet-sprite-ear right" style="height:24px;background:linear-gradient(135deg,#fbbf24,#f97316)"></div>
-                  <div class="pet-sprite-face">
-                    <div class="pet-eye left"></div>
-                    <div class="pet-eye right"></div>
-                    <div class="pet-blush left"></div>
-                    <div class="pet-blush right"></div>
-                    <div class="pet-mouth"></div>
-                  </div>
+              <button class="pet-card" data-pet="dog" type="button">
+                <div class="pet-sprite">
+                  <div class="pet-emoji">🐶</div>
                 </div>
-              </div>
-              <div class="pet-body-tag">Собака</div>
-              <div class="pet-body-sub">Верный озорник</div>
-            </button>
+                <div class="pet-name-label">Собака</div>
+                <div class="pet-tag">🦴 Игривый</div>
+              </button>
 
-            <!-- Хомяк -->
-            <button class="pet-card" data-pet-type="hamster" type="button">
-              <div class="pet-sprite-preview">
-                <div class="pet-sprite-head" style="width:58px;height:50px;border-radius:38px;
-                background: radial-gradient(circle at 30% 10%, #fffbeb 0, #fed7aa 55%, #f97316 100%);">
-                  <div class="pet-sprite-face">
-                    <div class="pet-eye left"></div>
-                    <div class="pet-eye right"></div>
-                    <div class="pet-blush left"></div>
-                    <div class="pet-blush right"></div>
-                    <div class="pet-mouth"></div>
-                  </div>
+              <button class="pet-card" data-pet="hamster" type="button">
+                <div class="pet-sprite">
+                  <div class="pet-emoji">🐹</div>
                 </div>
-              </div>
-              <div class="pet-body-tag">Хомяк</div>
-              <div class="pet-body-sub">Карманный сладкоежка</div>
-            </button>
-          </div>
+                <div class="pet-name-label">Хомяк</div>
+                <div class="pet-tag">🌰 Пухлый</div>
+              </button>
+            </div>
 
-          <div class="text-soft" style="font-size:12px;margin-top:4px;">
-            Выбор можно изменить, начав игру заново. Прогресс автоматически сохраняется.
+            <p class="text-soft mt-xs">
+              Можно вернуться к питомцу в любой момент — прогресс сохранится на этом устройстве.
+            </p>
           </div>
+        </div>
 
-          <button class="btn-primary" id="btn-select-pet-next" disabled>
-            Далее
+        <div class="footer-sticky">
+          <button class="btn-primary" id="btnPetSelectNext" disabled>
+            Далее <span>➜</span>
           </button>
         </div>
       </div>
     </section>
 
-    <!-- 2. Имя питомца -->
+    <!-- SCREEN: Pet name -->
     <section class="screen" id="screen-pet-name">
-      <div class="card">
-        <div class="card-inner">
-          <div class="card-header">
-            <div class="card-title">Имя для любимца</div>
-            <div class="card-subtitle" id="pet-name-subtitle">
+      <div class="screen-inner">
+        <div class="card">
+          <div class="card-content">
+            <div class="card-title-row">
+              <div class="card-title">
+                Имя питомца
+                <span>✏️</span>
+              </div>
+            </div>
+            <div class="card-subtitle" id="petNameSubtitle">
               Придумайте тёплое имя для вашего нового друга.
             </div>
-          </div>
 
-          <div class="form-group">
-            <label for="petNameInput" class="form-label">Как мы будем его звать?</label>
-            <input id="petNameInput"
-                   class="form-input"
-                   type="text"
-                   maxlength="18"
-                   placeholder="Например: Пушок или Боня" />
-          </div>
+            <div class="form-group">
+              <label class="form-label" for="petNameInput">Как назовём питомца?</label>
+              <input id="petNameInput"
+                     class="form-input"
+                     type="text"
+                     maxlength="18"
+                     placeholder="Например: Пушок, Лора, Буба..." />
+            </div>
 
-          <div class="text-soft" style="font-size:12px;margin-top:4px;">
-            Питомец будет откликаться на это имя и радоваться, когда вы заходите к нему в домик.
+            <p class="text-soft mt-xs">
+              Имя можно изменить позже, но питомцу понравится, когда вы будете звать его ласково. 💛
+            </p>
           </div>
+        </div>
 
-          <button class="btn-primary" id="btn-create-pet">
-            Продолжить
+        <div class="footer-sticky">
+          <button class="btn-primary" id="btnCreatePet">
+            Продолжить <span>✨</span>
           </button>
         </div>
       </div>
     </section>
 
-    <!-- 3. Главный экран питомца -->
+    <!-- SCREEN: Pet main -->
     <section class="screen" id="screen-pet-main">
-      <div class="card">
-        <div class="card-inner">
-          <div class="pet-main-header">
-            <div class="pet-mood-indicator" id="moodBadge">
-              <span id="moodBadgeIcon">🙂</span>
-              <span id="moodBadgeText">Спокойно</span>
+      <div class="screen-inner">
+        <div class="card">
+          <div class="card-content">
+            <div class="pet-header-row">
+              <div class="coin-chip">
+                <span>💰</span>
+                <span id="coinsChip">0</span>
+              </div>
+              <div class="pet-name-chip" id="petNameLabel">Питомец</div>
             </div>
-            <div class="pet-name-chip">
-              <span id="petNameDisplay">Питомец</span>
-            </div>
-            <button class="btn-secondary" id="btn-open-shop">Магазин</button>
-          </div>
 
-          <div class="pet-main-layout">
             <div class="pet-stage-wrap">
               <div class="pet-stage" id="petStage">
-                <div class="pet-stage-floor"></div>
-                <div class="pet-main-sprite pet-main-idle" id="petSpriteMain">
-                  <div class="pet-main-body" id="petBodyMain"></div>
-                  <div class="pet-main-head">
-                    <div class="pet-main-ears">
-                      <div class="pet-main-ear left"></div>
-                      <div class="pet-main-ear right"></div>
-                    </div>
-                    <div class="pet-main-face">
-                      <div class="pet-main-eye left"></div>
-                      <div class="pet-main-eye right"></div>
-                      <div class="pet-main-blush left"></div>
-                      <div class="pet-main-blush right"></div>
-                      <div class="pet-main-mouth" id="petMouthMain"></div>
-                    </div>
-                  </div>
+                <div class="pet-floor"></div>
+                <div class="pet-main-sprite" id="petSprite">
+                  <div class="pet-main-highlight"></div>
+                  <div class="pet-main-emoji" id="petEmoji">🐱</div>
                 </div>
+                <div class="pet-heart" id="petHeart" style="display:none;">💛</div>
               </div>
             </div>
+            <div class="mood-label" id="moodLabel">
+              Питомец спокоен и ждёт игр ✨
+            </div>
 
-            <div class="stats-panel">
+            <div class="stats">
               <div class="stat-row">
                 <div class="stat-icon">🍗</div>
                 <div class="stat-content">
                   <div class="stat-label-row">
                     <span>Сытость</span>
-                    <span><strong id="hungerText">100 / 100</strong></span>
+                    <span><strong id="satietyText">100 / 100</strong></span>
                   </div>
                   <div class="stat-bar">
-                    <div class="stat-bar-fill" id="hungerBar"></div>
+                    <div class="stat-fill" id="satietyBar"></div>
                   </div>
                 </div>
               </div>
+
               <div class="stat-row">
-                <div class="stat-icon">🎈</div>
+                <div class="stat-icon">😊</div>
                 <div class="stat-content">
                   <div class="stat-label-row">
                     <span>Настроение</span>
                     <span><strong id="moodText">100 / 100</strong></span>
                   </div>
                   <div class="stat-bar">
-                    <div class="stat-bar-fill mood" id="moodBar"></div>
+                    <div class="stat-fill mood" id="moodBar"></div>
                   </div>
                 </div>
               </div>
 
-              <div class="text-soft" style="font-size:11px;margin-top:2px;">
-                Показатели снижаются каждые 30 минут. Кормите и играйте с питомцем, чтобы он оставался счастливым.
-              </div>
+              <p class="text-soft mt-xs">
+                Сытость и настроение падают со временем. Кормите и играйте, чтобы питомец был счастлив 💛
+              </p>
             </div>
 
-            <div class="pet-bottom-bar">
-              <button class="btn-primary" id="btn-play-match3">
-                Играть в “3 в ряд”
-              </button>
-              <button class="btn-secondary" id="btn-open-shop-bottom">
-                Магазин
-              </button>
+            <div class="pet-bottom">
+              <div class="pet-bottom-row">
+                <button class="btn-secondary" id="btnOpenShop">
+                  🛒 Магазин
+                </button>
+                <button class="btn-secondary" id="btnToLevels">
+                  🎮 Играть
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </section>
 
-    <!-- 4. Экран выбора уровня -->
-    <section class="screen" id="screen-level-select">
-      <div class="card">
-        <div class="card-inner">
-          <div class="card-header">
-            <div class="card-title">Уровни “3 в ряд”</div>
-            <div class="card-subtitle">
-              Проходите уровни с разной геометрией поля и зарабатывайте монеты.
-            </div>
-          </div>
-
-          <div class="levels-grid" id="levelsGrid"></div>
-
-          <div class="text-soft" style="font-size:11px;margin-top:4px;">
-            За прохождение уровня вы получаете <strong>10 монет</strong>. Попыток неограниченное количество.
-          </div>
-
-          <button class="btn-secondary" id="btn-back-to-pet-from-levels">
-            Вернуться к питомцу
+        <div class="footer-sticky">
+          <button class="btn-primary" id="btnQuickCare">
+            Погладить (+настроение)
           </button>
         </div>
       </div>
     </section>
 
-    <!-- 5. Экран игры “3 в ряд” -->
+    <!-- SCREEN: Level select -->
+    <section class="screen" id="screen-level-select">
+      <div class="screen-inner">
+        <div class="card">
+          <div class="card-content">
+            <div class="card-title-row">
+              <div class="card-title">
+                Уровни "3 в ряд"
+                <span>💎</span>
+              </div>
+              <button class="btn-secondary" id="btnBackToPetFromLevels">
+                ← К питомцу
+              </button>
+            </div>
+            <div class="card-subtitle">
+              Собирайте комбинации, чтобы зарабатывать монеты для питомца.
+            </div>
+
+            <div class="level-grid" id="levelGrid">
+              <!-- генерируется скриптом -->
+            </div>
+
+            <p class="text-soft mt-xs">
+              За прохождение уровня вы получаете <strong>10 монет</strong>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCREEN: Match-3 -->
     <section class="screen" id="screen-match3">
-      <div class="card">
-        <div class="card-inner">
-          <div class="match3-top">
-            <div class="match3-info-chip">
-              Уровень <span id="matchLevelNumber">1</span>
+      <div class="screen-inner">
+        <div class="card">
+          <div class="card-content">
+            <div class="match-top-row">
+              <button class="btn-secondary" id="btnMatchBack">
+                ← Уровни
+              </button>
+              <div class="match-info-chip">
+                Ходы: <strong id="movesLeft">0</strong>
+              </div>
+              <div class="match-info-chip">
+                Очки: <strong id="scoreValue">0</strong>
+              </div>
             </div>
-            <div class="match3-info-chip">
-              Ходы: <span id="movesLeft">20</span>
+
+            <div class="match-info-chip mt-xs" style="justify-content:center;">
+              Цель: <strong id="scoreTargetLabel">100 очков</strong>
             </div>
-            <div class="match3-info-chip">
-              Очки: <span id="scoreCurrent">0</span> / <span id="scoreTarget">1000</span>
+
+            <div class="match-board-wrap">
+              <div class="match-board" id="matchBoard">
+                <!-- генерируется скриптом -->
+              </div>
             </div>
-          </div>
 
-          <div class="match3-board-wrap">
-            <div class="match3-board" id="matchBoard"></div>
-          </div>
+            <div class="match-message" id="matchMessage">
+              Коснитесь двух соседних фишек, чтобы поменять их местами.
+            </div>
 
-          <div class="match3-footer">
-            <button class="btn-secondary" id="btn-exit-match3">
-              Завершить
-            </button>
-            <button class="btn-secondary" id="btn-match3-hint">
-              Подсказка
-            </button>
-          </div>
-
-          <!-- Оверлей результата -->
-          <div class="overlay-center" id="match3ResultOverlay">
-            <div class="overlay-card">
-              <h3 id="match3ResultTitle">Уровень пройден!</h3>
-              <p id="match3ResultText">
-                Питомец будет рад дополнительным монеткам за вашу победу.
-              </p>
-              <button class="btn-primary" id="btn-match3-result-ok">
-                Продолжить
+            <div class="match-bottom">
+              <button class="btn-secondary" id="btnRestartLevel">
+                ↻ Заново
+              </button>
+              <button class="btn-secondary" id="btnMatchHint">
+                💡 Подсказка
               </button>
             </div>
           </div>
@@ -1440,205 +1237,171 @@
   </main>
 
   <!-- SHOP OVERLAY -->
-  <div class="shop-overlay" id="shopOverlay">
+  <div class="overlay" id="shopOverlay">
     <div class="shop-panel">
       <div class="shop-header">
-        <div class="shop-tabs">
-          <button class="shop-tab active" data-shop-tab="food">Еда</button>
-          <button class="shop-tab" data-shop-tab="toys">Игрушки</button>
+        <div class="shop-title">
+          🛒 Магазин
         </div>
-        <div class="shop-balance">
-          <span>Баланс:</span>
-          <div class="coin-circle" style="width:16px;height:16px;font-size:10px;">₵</div>
-          <span id="shopBalance">0</span>
+        <div class="match-info-chip">
+          Монеты: <strong id="shopCoins">0</strong>
         </div>
       </div>
 
-      <div class="shop-items" id="shopItems"></div>
+      <div class="shop-tabs">
+        <button class="shop-tab active" data-tab="food">Еда</button>
+        <button class="shop-tab" data-tab="toys">Игрушки</button>
+      </div>
+
+      <div class="shop-items" id="shopItems">
+        <!-- генерируется скриптом -->
+      </div>
 
       <div class="shop-footer">
-        <button class="btn-secondary" id="btn-close-shop">Закрыть</button>
+        <button class="btn-secondary" id="btnCloseShop">
+          Закрыть
+        </button>
       </div>
     </div>
   </div>
 </div>
 
 <script>
-(function () {
-  const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+(function() {
+  const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
   if (tg) {
     try {
       tg.ready();
       tg.expand();
-      if (tg.setBackgroundColor) tg.setBackgroundColor("#f9f3ef");
-    } catch (e) { console.warn("TWA init error", e); }
+      if (tg.setBackgroundColor) tg.setBackgroundColor("#f9f4f0");
+    } catch (e) {
+      console.warn("Telegram WebApp init error", e);
+    }
   }
 
-  const STORAGE_KEY = "homescapes_pet_match3_state_v1";
+  const STORAGE_KEY = "homescape_pet_match3_state_v1";
 
-  const screens = {
-    selectPet: document.getElementById("screen-select-pet"),
+  const SCREENS = {
+    petSelect: document.getElementById("screen-pet-select"),
     petName: document.getElementById("screen-pet-name"),
     petMain: document.getElementById("screen-pet-main"),
-    levels: document.getElementById("screen-level-select"),
+    levelSelect: document.getElementById("screen-level-select"),
     match3: document.getElementById("screen-match3"),
   };
 
-  const headerTitle = document.getElementById("headerTitle");
-  const btnBackRoot = document.getElementById("btnBackRoot");
-  const coinBalanceEl = document.getElementById("coinBalance");
+  function showScreen(key) {
+    Object.values(SCREENS).forEach(el => el.classList.remove("active"));
+    if (SCREENS[key]) SCREENS[key].classList.add("active");
+  }
 
-  const shopOverlay = document.getElementById("shopOverlay");
-  const shopTabs = document.querySelectorAll(".shop-tab");
-  const shopItemsContainer = document.getElementById("shopItems");
-  const shopBalanceEl = document.getElementById("shopBalance");
-  const btnCloseShop = document.getElementById("btn-close-shop");
+  const els = {
+    btnClose: document.getElementById("btnClose"),
+    userAvatar: document.getElementById("userAvatar"),
+    userName: document.getElementById("userName"),
+    headerCoins: document.getElementById("headerCoins"),
+    btnPetSelectNext: document.getElementById("btnPetSelectNext"),
+    petCards: document.querySelectorAll(".pet-card"),
+    petNameSubtitle: document.getElementById("petNameSubtitle"),
+    petNameInput: document.getElementById("petNameInput"),
+    btnCreatePet: document.getElementById("btnCreatePet"),
+    petNameLabel: document.getElementById("petNameLabel"),
+    coinsChip: document.getElementById("coinsChip"),
+    petEmoji: document.getElementById("petEmoji"),
+    petSprite: document.getElementById("petSprite"),
+    petHeart: document.getElementById("petHeart"),
+    moodLabel: document.getElementById("moodLabel"),
+    satietyText: document.getElementById("satietyText"),
+    satietyBar: document.getElementById("satietyBar"),
+    moodText: document.getElementById("moodText"),
+    moodBar: document.getElementById("moodBar"),
+    btnQuickCare: document.getElementById("btnQuickCare"),
+    btnOpenShop: document.getElementById("btnOpenShop"),
+    btnToLevels: document.getElementById("btnToLevels"),
+    shopOverlay: document.getElementById("shopOverlay"),
+    shopTabs: document.querySelectorAll(".shop-tab"),
+    shopItems: document.getElementById("shopItems"),
+    shopCoins: document.getElementById("shopCoins"),
+    btnCloseShop: document.getElementById("btnCloseShop"),
+    levelGrid: document.getElementById("levelGrid"),
+    btnBackToPetFromLevels: document.getElementById("btnBackToPetFromLevels"),
+    btnMatchBack: document.getElementById("btnMatchBack"),
+    btnRestartLevel: document.getElementById("btnRestartLevel"),
+    btnMatchHint: document.getElementById("btnMatchHint"),
+    matchBoard: document.getElementById("matchBoard"),
+    movesLeft: document.getElementById("movesLeft"),
+    scoreValue: document.getElementById("scoreValue"),
+    scoreTargetLabel: document.getElementById("scoreTargetLabel"),
+    matchMessage: document.getElementById("matchMessage"),
+  };
 
-  const petCardEls = document.querySelectorAll(".pet-card");
-  const btnSelectPetNext = document.getElementById("btn-select-pet-next");
-  const petNameInput = document.getElementById("petNameInput");
-  const btnCreatePet = document.getElementById("btn-create-pet");
-  const petNameSubtitle = document.getElementById("pet-name-subtitle");
-
-  const petNameDisplay = document.getElementById("petNameDisplay");
-  const hungerText = document.getElementById("hungerText");
-  const hungerBar = document.getElementById("hungerBar");
-  const moodText = document.getElementById("moodText");
-  const moodBar = document.getElementById("moodBar");
-  const moodBadge = document.getElementById("moodBadge");
-  const moodBadgeIcon = document.getElementById("moodBadgeIcon");
-  const moodBadgeText = document.getElementById("moodBadgeText");
-
-  const petSpriteMain = document.getElementById("petSpriteMain");
-  const petBodyMain = document.getElementById("petBodyMain");
-  const petMouthMain = document.getElementById("petMouthMain");
-
-  const btnPlayMatch3 = document.getElementById("btn-play-match3");
-  const btnOpenShopTop = document.getElementById("btn-open-shop");
-  const btnOpenShopBottom = document.getElementById("btn-open-shop-bottom");
-  const btnBackToPetFromLevels = document.getElementById("btn-back-to-pet-from-levels");
-
-  const levelsGrid = document.getElementById("levelsGrid");
-
-  const matchBoardEl = document.getElementById("matchBoard");
-  const matchLevelNumberEl = document.getElementById("matchLevelNumber");
-  const movesLeftEl = document.getElementById("movesLeft");
-  const scoreCurrentEl = document.getElementById("scoreCurrent");
-  const scoreTargetEl = document.getElementById("scoreTarget");
-  const btnExitMatch3 = document.getElementById("btn-exit-match3");
-  const btnMatch3Hint = document.getElementById("btn-match3-hint");
-  const match3ResultOverlay = document.getElementById("match3ResultOverlay");
-  const match3ResultTitle = document.getElementById("match3ResultTitle");
-  const match3ResultText = document.getElementById("match3ResultText");
-  const btnMatch3ResultOk = document.getElementById("btn-match3-result-ok");
+  function showAlert(msg) {
+    if (tg && tg.showAlert) tg.showAlert(msg);
+    else alert(msg);
+  }
 
   const defaultState = {
     petType: null,
     petName: "",
     coins: 0,
-    hunger: 100,
+    satiety: 100,
     mood: 100,
-    lastDecay: Date.now(),
-    itemsPurchased: {
-      fish: 0,
-      ball: 0,
-      cake: 0
-    },
-    levelsCompleted: {},
+    satietyMax: 100,
+    moodMax: 100,
+    lastDecayTs: Date.now(),
+    items: [],
+    completedLevels: [],
   };
 
   let state = { ...defaultState };
-  let currentScreenKey = "selectPet";
-  let energyTimer = null;
+  let currentLevelIndex = null;
+  let matchBoard = [];
+  let matchRows = 0;
+  let matchCols = 0;
+  let matchMovesLeft = 0;
+  let matchScore = 0;
+  let matchTarget = 100;
+  let selectedCell = null;
+  let decayTimer = null;
 
-  // Match-3 runtime
-  let currentLevel = null;
-  let currentBoard = [];
-  let currentMask = [];
-  let boardRows = 0;
-  let boardCols = 0;
-  let matchSelected = null;
-  let isProcessing = false;
-  let movesLeft = 0;
-  let score = 0;
+  const MATCH_PIECES = ["🍎","🍋","🍇","🍓","🌸","💎"];
 
-  const shopData = {
+  const LEVELS = [
+    { id: 1, name: "Классика",  desc: "7×9",           rows: 7, cols: 9, mask: null, moves: 18, target: 120 },
+    { id: 2, name: "Треуголка", desc: "треугольник",   rows: 8, cols: 8, mask: "triangle", moves: 20, target: 140 },
+    { id: 3, name: "Коридор",   desc: "5×9 + блоки",   rows: 5, cols: 9, mask: "obstacles", moves: 16, target: 110 },
+    { id: 4, name: "Сердце",    desc: "в форме сердца",rows: 8, cols: 8, mask: "heart", moves: 22, target: 160 },
+    { id: 5, name: "Тяжёлый пол",desc: "8×8 блоки",    rows: 8, cols: 8, mask: "blocks", moves: 20, target: 150 },
+    { id: 6, name: "Уютный дом", desc:"S-поле",       rows: 7, cols: 7, mask: "snake", moves: 18, target: 130 },
+    { id: 7, name: "Балкон",     desc:"узкое поле",    rows: 9, cols: 5, mask: null, moves: 15, target: 120 },
+    { id: 8, name: "Зигзаг",     desc:"волнистое",     rows: 7, cols: 7, mask: "zigzag", moves: 18, target: 140 },
+    { id: 9, name: "Лестница",   desc:"ступеньки",     rows: 8, cols: 8, mask: "stairs", moves: 20, target: 150 },
+    { id:10, name:"Терасса",     desc:"просторное",    rows: 8, cols: 9, mask: null, moves: 22, target: 170 },
+  ];
+
+  const SHOP_ITEMS = {
     food: [
-      { id: "fish", title: "Рыбка", cost: 20, hunger: +30, mood: +10,
-        desc: "Сочная рыбка для гурманов. Сильно повышает сытость и немного настроение." },
-      { id: "cake", title: "Праздничный торт", cost: 50, hunger: +50, mood: +30,
-        desc: "Целый торт только для питомца. Много сытости и радости сразу." }
+      { id:"fish",   name:"Рыбка",  emoji:"🐟", price:20, satiety:+30, mood:+10,
+        desc:"Любимая рыбка, быстро насыщает и поднимает настроение." },
+      { id:"cake",   name:"Торт",   emoji:"🍰", price:50, satiety:+50, mood:+30,
+        desc:"Праздничный десерт для особого случая." },
+      { id:"snack",  name:"Лакомство", emoji:"🍪", price:15, satiety:+20, mood:+15,
+        desc:"Небольшое поощрение за игру." },
     ],
     toys: [
-      { id: "ball", title: "Мячик", cost: 15, hunger: 0, mood: +25,
-        desc: "Пушистый мячик для игр в комнате. Сильно улучшает настроение." }
-    ]
+      { id:"ball",   name:"Мячик", emoji:"⚽", price:15, satiety:+0, mood:+25,
+        desc:"Классическая игрушка, питомец будет прыгать от радости." },
+      { id:"mouse",  name:"Мышка", emoji:"🧸", price:25, satiety:+0, mood:+35,
+        desc:"Мягкая игрушка, чтобы обниматься и играть." },
+      { id:"tower",  name:"Домик", emoji:"🏰", price:60, satiety:+0, mood:+50,
+        desc:"Новый домик, в котором так уютно жить." },
+    ],
   };
-
-  const LEVEL_DEFS = [
-    // 1: классическое 7x9
-    {
-      id: 1,
-      rows: 7,
-      cols: 9,
-      description: "Классическое поле 7×9",
-      moves: 20,
-      targetScore: 800,
-      mask: null
-    },
-    // 2: треугольное поле
-    {
-      id: 2,
-      rows: 7,
-      cols: 7,
-      description: "Треугольное поле",
-      moves: 18,
-      targetScore: 900,
-      mask: "triangle"
-    },
-    // 3: 5x9 с “препятствиями” (дыры)
-    {
-      id: 3,
-      rows: 5,
-      cols: 9,
-      description: "Поле с препятствиями",
-      moves: 18,
-      targetScore: 900,
-      mask: "holes"
-    },
-    // 4: сердце
-    {
-      id: 4,
-      rows: 9,
-      cols: 9,
-      description: "Поле в форме сердца",
-      moves: 22,
-      targetScore: 1000,
-      mask: "heart"
-    },
-    // 5: 8x8 с пустыми блоками
-    {
-      id: 5,
-      rows: 8,
-      cols: 8,
-      description: "Поле с пустыми блоками",
-      moves: 20,
-      targetScore: 950,
-      mask: "holes2"
-    },
-    // остальные уровни — простые квадраты
-    { id: 6, rows: 7, cols: 7, description: "Классический", moves: 18, targetScore: 900, mask: null },
-    { id: 7, rows: 8, cols: 7, description: "Чуть шире", moves: 20, targetScore: 1000, mask: null },
-    { id: 8, rows: 6, cols: 8, description: "Компактный", moves: 16, targetScore: 850, mask: null },
-    { id: 9, rows: 7, cols: 8, description: "Ступеньки", moves: 18, targetScore: 950, mask: "stairs" },
-    { id: 10, rows: 8, cols: 8, description: "Плотное поле", moves: 22, targetScore: 1100, mask: null }
-  ];
 
   function saveState() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (e) {
-      console.warn("saveState error", e);
+      console.warn("save failed", e);
     }
   }
 
@@ -1647,608 +1410,693 @@
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
       const parsed = JSON.parse(raw);
-      state = {
-        ...defaultState,
-        ...parsed,
-        itemsPurchased: {
-          ...defaultState.itemsPurchased,
-          ...(parsed.itemsPurchased || {})
-        },
-        levelsCompleted: parsed.levelsCompleted || {}
-      };
+      state = { ...defaultState, ...parsed };
+      if (!Array.isArray(state.items)) state.items = [];
+      if (!Array.isArray(state.completedLevels)) state.completedLevels = [];
+      if (!state.lastDecayTs) state.lastDecayTs = Date.now();
     } catch (e) {
-      console.warn("loadState error", e);
+      console.warn("load failed", e);
     }
   }
 
-  function switchScreen(key) {
-    currentScreenKey = key;
-    Object.entries(screens).forEach(([k, el]) => {
-      if (k === key) el.classList.add("active");
-      else el.classList.remove("active");
-    });
-
-    let title = "Домик питомца";
-    if (key === "selectPet") title = "Выбор питомца";
-    else if (key === "petName") title = "Имя питомца";
-    else if (key === "petMain") title = "Домик питомца";
-    else if (key === "levels") title = "Уровни 3 в ряд";
-    else if (key === "match3") title = "Игра 3 в ряд";
-    headerTitle.textContent = title;
-
-    if (key === "petMain" || key === "selectPet" || key === "petName") {
-      btnBackRoot.style.display = "none";
-    } else {
-      btnBackRoot.style.display = "inline-flex";
+  function initUserInfo() {
+    if (!tg || !tg.initDataUnsafe || !tg.initDataUnsafe.user) {
+      els.userName.textContent = "Гость";
+      els.userAvatar.textContent = "🧸";
+      return;
+    }
+    const u = tg.initDataUnsafe.user;
+    const name = ((u.first_name || "") + " " + (u.last_name || "")).trim();
+    const display = name || u.username || "Гость";
+    els.userName.textContent = display;
+    els.userAvatar.textContent = (display[0] || "🙂").toUpperCase();
+    if (!els.petNameInput.value) {
+      els.petNameInput.placeholder = `Например: ${display.split(" ")[0] || "Пушок"}`;
     }
   }
 
-  function showAlert(msg) {
-    if (tg && tg.showAlert) tg.showAlert(msg);
-    else alert(msg);
-  }
-
-  function updateCoinsUI() {
-    coinBalanceEl.textContent = state.coins.toString();
-    shopBalanceEl.textContent = state.coins.toString();
-  }
-
-  function clamp(val, min = 0, max = 100) {
-    return Math.max(min, Math.min(max, val));
-  }
-
-  function applyDecayIfNeeded() {
+  function applyDecay() {
     const now = Date.now();
-    const diffMs = now - (state.lastDecay || now);
-    const minutes = Math.floor(diffMs / 60000);
-    if (minutes <= 0) return;
-
-    const steps = Math.floor(minutes / 30);
-    if (steps <= 0) return;
-
-    const decayHunger = 5 * steps;
-    const decayMood = 5 * steps;
-
-    state.hunger = clamp(state.hunger - decayHunger);
-    state.mood = clamp(state.mood - decayMood);
-    state.lastDecay = now;
+    const diff = now - (state.lastDecayTs || now);
+    const step = 30 * 60 * 1000;
+    if (diff < step) return;
+    const steps = Math.floor(diff / step);
+    const perStepSatiety = 6;
+    const perStepMood = 5;
+    state.satiety = Math.max(0, state.satiety - steps * perStepSatiety);
+    state.mood = Math.max(0, state.mood - steps * perStepMood);
+    state.lastDecayTs = now;
+    updatePetUI();
     saveState();
   }
 
   function startDecayTimer() {
-    if (energyTimer) clearInterval(energyTimer);
-    energyTimer = setInterval(() => {
-      const now = Date.now();
-      const diffMs = now - (state.lastDecay || now);
-      const minutes = Math.floor(diffMs / 60000);
-      if (minutes >= 30) {
-        applyDecayIfNeeded();
-        updatePetUI();
-      }
-    }, 60000);
+    if (decayTimer) clearInterval(decayTimer);
+    decayTimer = setInterval(applyDecay, 60 * 1000);
   }
 
-  function updatePetMoodVisual() {
-    const hunger = state.hunger;
-    const mood = state.mood;
-    const avg = (hunger + mood) / 2;
+  function getPetEmojiByMood() {
+    if (!state.petType) return "🐾";
+    const ratioSat = state.satiety / state.satietyMax;
+    const ratioMood = state.mood / state.moodMax;
+    const minRatio = Math.min(ratioSat, ratioMood);
 
-    petBodyMain.classList.remove("pet-main-sad-tone", "pet-main-happy-tone");
-    petMouthMain.classList.remove("happy", "sad");
-
-    if (avg >= 70) {
-      petBodyMain.classList.add("pet-main-happy-tone");
-      petMouthMain.classList.add("happy");
-      moodBadgeIcon.textContent = "😊";
-      moodBadgeText.textContent = "Очень рад";
-    } else if (avg >= 40) {
-      moodBadgeIcon.textContent = "🙂";
-      moodBadgeText.textContent = "Спокойно";
+    if (minRatio <= 0.25) {
+      if (state.petType === "cat") return "😿";
+      if (state.petType === "dog") return "🐶";
+      if (state.petType === "hamster") return "😔";
+    } else if (minRatio <= 0.55) {
+      if (state.petType === "cat") return "😺";
+      if (state.petType === "dog") return "🐶";
+      if (state.petType === "hamster") return "🙂";
     } else {
-      petBodyMain.classList.add("pet-main-sad-tone");
-      petMouthMain.classList.add("sad");
-      moodBadgeIcon.textContent = "☹️";
-      moodBadgeText.textContent = "Грустит";
+      if (state.petType === "cat") return "😻";
+      if (state.petType === "dog") return "🐕";
+      if (state.petType === "hamster") return "🥰";
     }
+    return "🐾";
   }
 
   function updatePetUI() {
-    petNameDisplay.textContent = state.petName || "Питомец";
+    els.headerCoins.textContent = state.coins;
+    els.coinsChip.textContent = state.coins;
+    els.petNameLabel.textContent = state.petName || "Питомец";
+    els.petEmoji.textContent = getPetEmojiByMood();
 
-    const h = clamp(state.hunger);
-    const m = clamp(state.mood);
-    hungerText.textContent = `${h} / 100`;
-    moodText.textContent = `${m} / 100`;
-    hungerBar.style.width = `${h}%`;
-    moodBar.style.width = `${m}%`;
+    const s = Math.max(0, Math.min(state.satiety, state.satietyMax));
+    const m = Math.max(0, Math.min(state.mood, state.moodMax));
+    els.satietyText.textContent = `${s} / ${state.satietyMax}`;
+    els.moodText.textContent = `${m} / ${state.moodMax}`;
 
-    updatePetMoodVisual();
-    updateCoinsUI();
+    const sPerc = state.satietyMax > 0 ? (s / state.satietyMax) * 100 : 0;
+    const mPerc = state.moodMax > 0 ? (m / state.moodMax) * 100 : 0;
+    els.satietyBar.style.width = `${Math.min(100, Math.max(0, sPerc))}%`;
+    els.moodBar.style.width = `${Math.min(100, Math.max(0, mPerc))}%`;
+
+    const ratio = Math.min(sPerc, mPerc) / 100;
+    if (ratio <= 0.25) {
+      els.moodLabel.textContent = "Питомец выглядит грустным... Накормите и поиграйте с ним 💔";
+    } else if (ratio <= 0.6) {
+      els.moodLabel.textContent = "Питомцу немного скучно. Нужны забота и игра 😊";
+    } else {
+      els.moodLabel.textContent = "Питомец счастлив и наслаждается уютом дома ✨";
+    }
   }
 
-  function animatePetHappy() {
-    petSpriteMain.classList.remove("pet-main-happy-anim");
-    void petSpriteMain.offsetWidth;
-    petSpriteMain.classList.add("pet-main-happy-anim");
+  function spawnHeart() {
+    els.petHeart.style.display = "block";
+    els.petHeart.textContent = "💛";
+    setTimeout(() => {
+      els.petHeart.style.display = "none";
+    }, 800);
   }
 
-  function adjustStats(deltaHunger, deltaMood) {
-    state.hunger = clamp(state.hunger + deltaHunger);
-    state.mood = clamp(state.mood + deltaMood);
-    state.lastDecay = Date.now();
-    saveState();
+  function bouncePet() {
+    els.petSprite.classList.remove("pet-bounce");
+    void els.petSprite.offsetWidth;
+    els.petSprite.classList.add("pet-bounce");
+  }
+
+  function carePet({ satietyDelta = 0, moodDelta = 0 }) {
+    state.satiety = Math.max(0, Math.min(state.satietyMax, state.satiety + satietyDelta));
+    state.mood = Math.max(0, Math.min(state.moodMax, state.mood + moodDelta));
+    state.lastDecayTs = Date.now();
     updatePetUI();
-    animatePetHappy();
+    bouncePet();
+    spawnHeart();
+    saveState();
   }
 
-  function renderShop(tabKey) {
-    shopItemsContainer.innerHTML = "";
-    const list = shopData[tabKey] || [];
-
+  function buildShopItems(tab) {
+    const list = SHOP_ITEMS[tab] || [];
+    els.shopItems.innerHTML = "";
     list.forEach(item => {
-      const div = document.createElement("div");
-      div.className = "shop-item";
-      div.dataset.itemId = item.id;
-
-      const icon = document.createElement("div");
-      icon.className = "shop-icon";
-      if (item.id === "fish") {
-        const g = document.createElement("div");
-        g.className = "icon-fish";
-        g.innerHTML =
-          '<div class="icon-fish-body"></div>' +
-          '<div class="icon-fish-tail"></div>' +
-          '<div class="icon-fish-eye"></div>';
-        icon.appendChild(g);
-      } else if (item.id === "ball") {
-        const g = document.createElement("div");
-        g.className = "icon-ball";
-        g.innerHTML =
-          '<div class="icon-ball-disc"></div>' +
-          '<div class="icon-ball-line"></div>';
-        icon.appendChild(g);
-      } else if (item.id === "cake") {
-        const g = document.createElement("div");
-        g.className = "icon-cake";
-        g.innerHTML =
-          '<div class="icon-cake-layer"></div>' +
-          '<div class="icon-cake-top"></div>' +
-          '<div class="icon-cake-candle"></div>' +
-          '<div class="icon-cake-flame"></div>';
-        icon.appendChild(g);
-      }
-
-      const content = document.createElement("div");
-      content.className = "shop-content";
-      const title = document.createElement("div");
-      title.className = "shop-item-title";
-      title.textContent = item.title;
-      const desc = document.createElement("div");
-      desc.className = "shop-item-desc";
-      desc.textContent = item.desc;
-
-      const meta = document.createElement("div");
-      meta.className = "shop-meta";
-      const priceChip = document.createElement("div");
-      priceChip.className = "shop-price-chip";
-      priceChip.innerHTML = `<span>₵${item.cost}</span>`;
-      const effectChip = document.createElement("div");
-      effectChip.className = "shop-effect-chip";
-      const h = item.hunger > 0 ? `Сытость +${item.hunger}` : "";
-      const m = item.mood > 0 ? `Настроение +${item.mood}` : "";
-      effectChip.textContent = `${h}${h && m ? ", " : ""}${m}`;
-      meta.appendChild(priceChip);
-      meta.appendChild(effectChip);
-
-      content.appendChild(title);
-      content.appendChild(desc);
-      content.appendChild(meta);
-
-      const actions = document.createElement("div");
-      actions.className = "shop-actions";
-      const btn = document.createElement("button");
-      btn.className = "shop-btn";
-      btn.textContent = "Купить";
-      if (state.coins < item.cost) btn.disabled = true;
-      btn.addEventListener("click", () => {
-        if (state.coins < item.cost) {
-          showAlert("Не хватает монет!");
-          return;
-        }
-        state.coins -= item.cost;
-        state.itemsPurchased[item.id] = (state.itemsPurchased[item.id] || 0) + 1;
-        adjustStats(item.hunger, item.mood);
-        saveState();
-        updateCoinsUI();
-        renderShop(tabKey);
-      });
-      actions.appendChild(btn);
-
-      div.appendChild(icon);
-      div.appendChild(content);
-      div.appendChild(actions);
-      shopItemsContainer.appendChild(div);
-    });
-  }
-
-  function openShop(initialTab = "food") {
-    shopOverlay.classList.add("visible");
-    shopTabs.forEach(tab => {
-      tab.classList.toggle("active", tab.dataset.shopTab === initialTab);
-    });
-    renderShop(initialTab);
-  }
-
-  function closeShop() {
-    shopOverlay.classList.remove("visible");
-  }
-
-  function initLevelsGrid() {
-    levelsGrid.innerHTML = "";
-    LEVEL_DEFS.forEach(level => {
-      const div = document.createElement("div");
-      div.className = "level-card";
-      if (state.levelsCompleted[level.id]) div.classList.add("completed");
-      div.dataset.levelId = level.id;
-      div.innerHTML = `
-        <div class="lvl-number">${level.id}</div>
-        <div class="lvl-tag">${level.description}</div>
+      const row = document.createElement("div");
+      row.className = "shop-item";
+      row.innerHTML = `
+        <div class="shop-icon">${item.emoji}</div>
+        <div class="shop-body">
+          <div class="shop-name">${item.name}</div>
+          <div class="shop-desc">${item.desc}</div>
+          <div class="shop-meta">
+            <span class="shop-price">💰 ${item.price}</span>
+            <span class="shop-effect">
+              ${item.satiety ? "Сытость +" + item.satiety + " " : ""}${item.mood ? "Настроение +" + item.mood : ""}
+            </span>
+          </div>
+        </div>
+        <div class="shop-action">
+          <button class="shop-btn" data-item="${item.id}" data-tab="${tab}">
+            Купить
+          </button>
+        </div>
       `;
-      div.addEventListener("click", () => {
-        startLevel(level.id);
+      els.shopItems.appendChild(row);
+    });
+
+    els.shopItems.querySelectorAll(".shop-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-item");
+        const t = btn.getAttribute("data-tab");
+        buyShopItem(t, id);
       });
-      levelsGrid.appendChild(div);
     });
   }
 
-  // MASKS for levels
-  function createMask(def) {
-    const { rows, cols, mask } = def;
-    const grid = [];
+  function buyShopItem(tab, id) {
+    const list = SHOP_ITEMS[tab] || [];
+    const item = list.find(i => i.id === id);
+    if (!item) return;
+
+    if (state.coins < item.price) {
+      showAlert("Не хватает монет для покупки 😿");
+      return;
+    }
+    state.coins -= item.price;
+    state.items.push(id);
+
+    carePet({ satietyDelta: item.satiety, moodDelta: item.mood });
+    updatePetUI();
+    els.shopCoins.textContent = state.coins;
+    saveState();
+
+    let msg;
+    if (tab === "food") {
+      msg = "Питомец вкусно поел и доволен 🍽️";
+    } else {
+      msg = "Питомец играет с новой игрушкой и счастлив 🧸";
+    }
+    showAlert(msg);
+  }
+
+  function buildLevels() {
+    els.levelGrid.innerHTML = "";
+    LEVELS.forEach((lvl, idx) => {
+      const unlocked = idx === 0 || state.completedLevels.includes(LEVELS[idx - 1].id);
+      const completed = state.completedLevels.includes(lvl.id);
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = "level-card" + (unlocked ? "" : " locked");
+      card.dataset.index = String(idx);
+      card.innerHTML = `
+        <div class="level-badge">${lvl.id}</div>
+        <div class="level-name">${lvl.name}</div>
+        <div class="level-meta">
+          ${lvl.desc}<br>
+          ${completed ? "✅ пройден" : unlocked ? "Доступен" : "🔒 заблокирован"}
+        </div>
+      `;
+      if (unlocked) {
+        card.addEventListener("click", () => {
+          startLevel(idx);
+        });
+      }
+      els.levelGrid.appendChild(card);
+    });
+  }
+
+  function makeMask(type, rows, cols) {
+    const mask = [];
     for (let r = 0; r < rows; r++) {
-      grid[r] = [];
-      for (let c = 0; c < cols; c++) {
-        grid[r][c] = true;
-      }
+      mask[r] = [];
+      for (let c = 0; c < cols; c++) mask[r][c] = true;
     }
-    if (!mask) return grid;
+    if (!type) return mask;
 
-    if (mask === "triangle") {
+    if (type === "triangle") {
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
-          if (c > r) grid[r][c] = false;
+          if (c > r) mask[r][c] = false;
         }
       }
-    } else if (mask === "holes") {
-      // несколько дыр
-      const holes = [
-        [1, 2], [1, 6],
-        [3, 1], [3, 7]
-      ];
-      holes.forEach(([r, c]) => {
-        if (r < rows && c < cols) grid[r][c] = false;
-      });
-    } else if (mask === "holes2") {
-      const holes = [
-        [2, 2], [2, 5],
-        [5, 2], [5, 5]
-      ];
-      holes.forEach(([r, c]) => {
-        if (r < rows && c < cols) grid[r][c] = false;
-      });
-    } else if (mask === "heart") {
+    } else if (type === "obstacles") {
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) mask[r][c] = true;
+      }
+      mask[2][3] = false;
+      mask[2][5] = false;
+    } else if (type === "heart") {
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) mask[r][c] = false;
+      }
+      const mid = Math.floor(cols / 2);
+      for (let c = mid - 2; c <= mid + 2; c++) mask[1][c] = true;
+      mask[0][mid-1] = true;
+      mask[0][mid+1] = true;
+      for (let r = 2; r < rows; r++) {
+        const spread = rows - r;
+        for (let c = mid - spread; c <= mid + spread; c++) {
+          mask[r][c] = true;
+        }
+      }
+    } else if (type === "blocks") {
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) mask[r][c] = true;
+      }
+      for (let r = 1; r < rows - 1; r++) {
+        if (r % 2 === 0) {
+          mask[r][1] = false;
+          mask[r][cols-2] = false;
+        }
+      }
+    } else if (type === "snake") {
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) mask[r][c] = false;
+      }
+      for (let r = 0; r < rows; r++) {
+        if (r % 2 === 0) {
+          for (let c = 0; c < cols; c++) mask[r][c] = true;
+        } else {
+          mask[r][0] = true;
+          mask[r][cols-1] = true;
+        }
+      }
+    } else if (type === "zigzag") {
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
-          grid[r][c] = false;
+          const offset = (r % 2 === 0) ? 1 : 0;
+          mask[r][c] = (c + offset) % 3 !== 0;
         }
       }
-      const center = Math.floor(cols / 2);
-      for (let r = 0; r < rows; r++) {
-        const width = [0, 3, 5, 7, 9, 7, 5, 3, 1][r] || 0;
-        const start = center - Math.floor(width / 2);
-        for (let i = 0; i < width; i++) {
-          const c = start + i;
-          if (c >= 0 && c < cols) grid[r][c] = true;
-        }
-      }
-    } else if (mask === "stairs") {
+    } else if (type === "stairs") {
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
-          if (c < r - 1) grid[r][c] = false;
+          if (c < r) mask[r][c] = false;
         }
       }
     }
 
-    return grid;
+    return mask;
   }
 
-  function showMatch3Result(win) {
-    match3ResultTitle.textContent = win ? "Уровень пройден!" : "Ходы закончились";
-    match3ResultText.textContent = win
-      ? "Вы получаете 10 монет. Питомец рад вашей победе!"
-      : "Цель не достигнута, но вы можете попробовать ещё раз.";
-    match3ResultOverlay.classList.add("visible");
+  function randomPiece() {
+    const idx = Math.floor(Math.random() * MATCH_PIECES.length);
+    return MATCH_PIECES[idx];
   }
 
-  function exitMatch3() {
-    match3ResultOverlay.classList.remove("visible");
-    switchScreen("levels");
-    initLevelsGrid();
-  }
-
-  function startLevel(levelId) {
-    const def = LEVEL_DEFS.find(l => l.id === levelId);
-    if (!def) return;
-
-    currentLevel = def;
-    boardRows = def.rows;
-    boardCols = def.cols;
-    currentMask = createMask(def);
-    currentBoard = [];
-    matchSelected = null;
-    isProcessing = false;
-    movesLeft = def.moves;
-    score = 0;
-
-    matchLevelNumberEl.textContent = def.id.toString();
-    movesLeftEl.textContent = movesLeft.toString();
-    scoreCurrentEl.textContent = "0";
-    scoreTargetEl.textContent = def.targetScore.toString();
-    match3ResultOverlay.classList.remove("visible");
-
-    matchBoardEl.style.gridTemplateRows = `repeat(${boardRows}, 1fr)`;
-    matchBoardEl.style.gridTemplateColumns = `repeat(${boardCols}, 1fr)`;
-    buildBoardInitial();
-
-    switchScreen("match3");
-  }
-
-  function randomTileType() {
-    return Math.floor(Math.random() * 6);
-  }
-
-  function buildBoardInitial() {
-    currentBoard = [];
-    matchBoardEl.innerHTML = "";
-
-    for (let r = 0; r < boardRows; r++) {
-      currentBoard[r] = [];
-      for (let c = 0; c < boardCols; c++) {
-        const playable = currentMask[r][c];
-        const cell = document.createElement("div");
-        cell.className = "cell" + (playable ? "" : " empty");
-        cell.dataset.row = r;
-        cell.dataset.col = c;
-        matchBoardEl.appendChild(cell);
-
-        if (!playable) {
-          currentBoard[r][c] = null;
-          continue;
-        }
-
-        let type;
-        do {
-          type = randomTileType();
-          currentBoard[r][c] = { type };
-        } while (createsMatch(r, c));
-
-        const tile = createTileElement(type, r, c);
-        cell.appendChild(tile);
-      }
-    }
-  }
-
-  function createTileElement(type, row, col) {
-    const tile = document.createElement("div");
-    tile.className = "tile tile-new type-" + type;
-    tile.dataset.row = row;
-    tile.dataset.col = col;
-
-    tile.addEventListener("click", () => {
-      handleTileClick(row, col);
-    });
-    return tile;
-  }
-
-  function getCell(row, col) {
-    if (row < 0 || row >= boardRows || col < 0 || col >= boardCols) return null;
-    return currentBoard[row][col];
-  }
-
-  function createsMatch(row, col) {
-    const cell = getCell(row, col);
-    if (!cell) return false;
-    const type = cell.type;
+  function hasMatchAt(board, r, c) {
+    const rows = board.length;
+    const cols = board[0].length;
+    const val = board[r][c];
+    if (!val) return false;
 
     let count = 1;
-    let c = col - 1;
-    while (c >= 0 && getCell(row, c) && getCell(row, c).type === type) {
-      count++; c--;
-    }
-    c = col + 1;
-    while (c < boardCols && getCell(row, c) && getCell(row, c).type === type) {
-      count++; c++;
-    }
+    let cc = c - 1;
+    while (cc >= 0 && board[r][cc] === val) { count++; cc--; }
+    cc = c + 1;
+    while (cc < cols && board[r][cc] === val) { count++; cc++; }
     if (count >= 3) return true;
 
     count = 1;
-    let r = row - 1;
-    while (r >= 0 && getCell(r, col) && getCell(r, col).type === type) {
-      count++; r--;
-    }
-    r = row + 1;
-    while (r < boardRows && getCell(r, col) && getCell(r, col).type === type) {
-      count++; r++;
-    }
+    let rr = r - 1;
+    while (rr >= 0 && board[rr][c] === val) { count++; rr--; }
+    rr = r + 1;
+    while (rr < rows && board[rr][c] === val) { count++; rr++; }
     return count >= 3;
   }
 
-  function handleTileClick(row, col) {
-    if (isProcessing) return;
-    if (!currentMask[row][col]) return;
-
-    const cell = getCell(row, col);
-    if (!cell) return;
-
-    if (!matchSelected) {
-      matchSelected = { row, col };
-      highlightSelection();
-      return;
+  function createInitialBoard(rows, cols, mask) {
+    const board = [];
+    for (let r = 0; r < rows; r++) {
+      board[r] = [];
+      for (let c = 0; c < cols; c++) {
+        if (mask && !mask[r][c]) {
+          board[r][c] = null;
+          continue;
+        }
+        let piece;
+        do {
+          piece = randomPiece();
+          board[r][c] = piece;
+        } while (hasMatchAt(board, r, c));
+      }
     }
-
-    if (matchSelected.row === row && matchSelected.col === col) {
-      matchSelected = null;
-      highlightSelection();
-      return;
-    }
-
-    const isAdj =
-      (Math.abs(matchSelected.row - row) === 1 && matchSelected.col === col) ||
-      (Math.abs(matchSelected.col - col) === 1 && matchSelected.row === row);
-
-    if (!isAdj) {
-      matchSelected = { row, col };
-      highlightSelection();
-      return;
-    }
-
-    isProcessing = true;
-    swapTiles(matchSelected, { row, col });
+    return board;
   }
 
-  function highlightSelection() {
-    const tiles = matchBoardEl.querySelectorAll(".tile");
-    tiles.forEach(t => t.classList.remove("selected"));
-    if (!matchSelected) return;
-    const sel = matchBoardEl.querySelector(
-      `.tile[data-row="${matchSelected.row}"][data-col="${matchSelected.col}"]`
+  function renderBoard() {
+    els.matchBoard.innerHTML = "";
+    els.matchBoard.style.gridTemplateColumns = `repeat(${matchCols}, 1fr)`;
+    els.matchBoard.style.gridTemplateRows = `repeat(${matchRows}, auto)`;
+
+    for (let r = 0; r < matchRows; r++) {
+      for (let c = 0; c < matchCols; c++) {
+        const val = matchBoard[r][c];
+        const cell = document.createElement("div");
+        cell.className = "match-cell";
+        cell.dataset.row = String(r);
+        cell.dataset.col = String(c);
+        if (val === null) {
+          cell.classList.add("empty");
+          cell.textContent = "";
+        } else {
+          cell.textContent = val;
+        }
+        cell.addEventListener("click", () => onCellClick(r, c));
+        els.matchBoard.appendChild(cell);
+      }
+    }
+  }
+
+  function findMatches(board) {
+    const rows = board.length;
+    const cols = board[0].length;
+    const toRemove = [];
+
+    for (let r = 0; r < rows; r++) {
+      let run = 1;
+      for (let c = 1; c <= cols; c++) {
+        const cur = c < cols ? board[r][c] : null;
+        const prev = board[r][c-1];
+        if (cur && cur === prev) {
+          run++;
+        } else {
+          if (prev && run >= 3) {
+            for (let k = 0; k < run; k++) {
+              toRemove.push([r, c-1-k]);
+            }
+          }
+          run = 1;
+        }
+      }
+    }
+
+    for (let c = 0; c < cols; c++) {
+      let run = 1;
+      for (let r = 1; r <= rows; r++) {
+        const cur = r < rows ? board[r][c] : null;
+        const prev = board[r-1][c];
+        if (cur && cur === prev) {
+          run++;
+        } else {
+          if (prev && run >= 3) {
+            for (let k = 0; k < run; k++) {
+              toRemove.push([r-1-k, c]);
+            }
+          }
+          run = 1;
+        }
+      }
+    }
+
+    const unique = [];
+    const set = new Set();
+    toRemove.forEach(([r, c]) => {
+      const key = r + ":" + c;
+      if (!set.has(key)) {
+        set.add(key);
+        unique.push([r, c]);
+      }
+    });
+    return unique;
+  }
+
+  function applyGravity(board) {
+    const rows = board.length;
+    const cols = board[0].length;
+    for (let c = 0; c < cols; c++) {
+      let writeRow = rows - 1;
+      for (let r = rows - 1; r >= 0; r--) {
+        if (board[r][c] !== null) {
+          board[writeRow][c] = board[r][c];
+          if (writeRow !== r) board[r][c] = null;
+          writeRow--;
+        }
+      }
+      for (let r = writeRow; r >= 0; r--) {
+        if (board[r][c] !== null) continue;
+        board[r][c] = randomPiece();
+      }
+    }
+  }
+
+  function updateMatchInfo() {
+    els.movesLeft.textContent = matchMovesLeft;
+    els.scoreValue.textContent = matchScore;
+    els.scoreTargetLabel.textContent = `${matchTarget} очков`;
+  }
+
+  function onCellClick(r, c) {
+    if (matchMovesLeft <= 0) return;
+    if (matchBoard[r][c] === null) return;
+
+    if (!selectedCell) {
+      selectedCell = { r, c };
+      highlightSelected();
+      return;
+    }
+
+    if (selectedCell.r === r && selectedCell.c === c) {
+      selectedCell = null;
+      highlightSelected();
+      return;
+    }
+
+    const dr = Math.abs(selectedCell.r - r);
+    const dc = Math.abs(selectedCell.c - c);
+    if (dr + dc !== 1) {
+      selectedCell = { r, c };
+      highlightSelected();
+      return;
+    }
+
+    trySwap(selectedCell.r, selectedCell.c, r, c);
+    selectedCell = null;
+    highlightSelected();
+  }
+
+  function highlightSelected() {
+    const cells = els.matchBoard.querySelectorAll(".match-cell");
+    cells.forEach(cell => cell.classList.remove("selected"));
+    if (!selectedCell) return;
+    const sel = Array.from(cells).find(cell =>
+      Number(cell.dataset.row) === selectedCell.r &&
+      Number(cell.dataset.col) === selectedCell.c
     );
     if (sel) sel.classList.add("selected");
   }
 
-  function swapTiles(a, b, revertIfNoMatch = true) {
-    const tmp = currentBoard[a.row][a.col];
-    currentBoard[a.row][a.col] = currentBoard[b.row][b.col];
-    currentBoard[b.row][b.col] = tmp;
+  function trySwap(r1, c1, r2, c2) {
+    const val1 = matchBoard[r1][c1];
+    const val2 = matchBoard[r2][c2];
+    matchBoard[r1][c1] = val2;
+    matchBoard[r2][c2] = val1;
 
-    const tileA = matchBoardEl.querySelector(`.tile[data-row="${a.row}"][data-col="${a.col}"]`);
-    const tileB = matchBoardEl.querySelector(`.tile[data-row="${b.row}"][data-col="${b.col}"]`);
-
-    if (tileA) {
-      tileA.dataset.row = b.row;
-      tileA.dataset.col = b.col;
-    }
-    if (tileB) {
-      tileB.dataset.row = a.row;
-      tileB.dataset.col = a.col;
-    }
-
-    const cellA = matchBoardEl.querySelector(`.cell[data-row="${a.row}"][data-col="${a.col}"]`);
-    const cellB = matchBoardEl.querySelector(`.cell[data-row="${b.row}"][data-col="${b.col}"]`);
-
-    if (cellA && cellB && tileA && tileB) {
-      cellA.appendChild(tileB);
-      cellB.appendChild(tileA);
-    }
-
-    highlightSelection();
-    const matches = findMatches();
-
-    if (matches.length === 0 && revertIfNoMatch) {
-      setTimeout(() => {
-        swapTiles(b, a, false);
-        matchSelected = null;
-        highlightSelection();
-        isProcessing = false;
-      }, 150);
+    const hasMatch = findMatches(matchBoard).length > 0;
+    if (!hasMatch) {
+      matchBoard[r1][c1] = val1;
+      matchBoard[r2][c2] = val2;
+      renderBoard();
+      els.matchMessage.textContent = "Нет совпадений. Попробуйте другой ход.";
       return;
     }
 
-    if (revertIfNoMatch) {
-      movesLeft--;
-      movesLeftEl.textContent = movesLeft.toString();
-    }
-
-    if (matches.length > 0) {
-      handleMatches(matches);
-    } else {
-      isProcessing = false;
-    }
+    matchMovesLeft--;
+    processMatches();
   }
 
-  function findMatches() {
-    const toClear = [];
-
-    for (let r = 0; r < boardRows; r++) {
-      let runType = null;
-      let runStart = 0;
-      for (let c = 0; c <= boardCols; c++) {
-        const cell = c < boardCols ? getCell(r, c) : null;
-        const type = cell ? cell.type : null;
-        if (type === runType && type != null) {
-          continue;
+  function processMatches() {
+    let totalRemoved = 0;
+    function step() {
+      const matches = findMatches(matchBoard);
+      if (matches.length === 0) {
+        if (totalRemoved > 0) {
+          matchScore += totalRemoved * 10;
+          updateMatchInfo();
+          if (matchScore >= matchTarget) levelCompleted();
+          else if (matchMovesLeft <= 0) levelFailed();
         } else {
-          if (runType != null && c - runStart >= 3) {
-            for (let cc = runStart; cc < c; cc++) {
-              toClear.push({ row: r, col: cc });
-            }
-          }
-          runType = type;
-          runStart = c;
+          updateMatchInfo();
         }
+        renderBoard();
+        return;
       }
-    }
+      totalRemoved += matches.length;
 
-    for (let c = 0; c < boardCols; c++) {
-      let runType = null;
-      let runStart = 0;
-      for (let r = 0; r <= boardRows; r++) {
-        const cell = r < boardRows ? getCell(r, c) : null;
-        const type = cell ? cell.type : null;
-        if (type === runType && type != null) {
-          continue;
-        } else {
-          if (runType != null && r - runStart >= 3) {
-            for (let rr = runStart; rr < r; rr++) {
-              toClear.push({ row: rr, col: c });
-            }
-          }
-          runType = type;
-          runStart = r;
+      matches.forEach(([r, c]) => {
+        const cell = els.matchBoard.querySelector(`.match-cell[data-row="${r}"][data-col="${c}"]`);
+        if (cell) {
+          cell.classList.add("remove");
         }
-      }
-    }
+      });
 
-    const key = p => `${p.row}:${p.col}`;
-    const map = {};
-    toClear.forEach(p => { map[key(p)] = p; });
-    return Object.values(map);
+      setTimeout(() => {
+        matches.forEach(([r, c]) => {
+          matchBoard[r][c] = null;
+        });
+        applyGravity(matchBoard);
+        renderBoard();
+        setTimeout(step, 100);
+      }, 280);
+    }
+    step();
   }
 
-  function handleMatches(matches) {
-    matches.forEach(p => {
-      const tile = matchBoardEl.querySelector(
-        `.tile[data-row="${p.row}"][data-col="${p.col}"]`
-      );
-      if (tile) tile.classList.add("tile-clearing");
+  function levelCompleted() {
+    els.matchMessage.textContent = "Уровень пройден! Питомец получил монетки 🥳";
+    if (!state.completedLevels.includes(LEVELS[currentLevelIndex].id)) {
+      state.completedLevels.push(LEVELS[currentLevelIndex].id);
+    }
+    state.coins += 10;
+    updatePetUI();
+    saveState();
+  }
+
+  function levelFailed() {
+    els.matchMessage.textContent = "Ходы закончились. Попробуйте ещё раз 💔";
+  }
+
+  function startLevel(idx) {
+    currentLevelIndex = idx;
+    const lvl = LEVELS[idx];
+    matchRows = lvl.rows;
+    matchCols = lvl.cols;
+    matchMovesLeft = lvl.moves;
+    matchScore = 0;
+    matchTarget = lvl.target;
+
+    const mask = makeMask(lvl.mask, matchRows, matchCols);
+    matchBoard = createInitialBoard(matchRows, matchCols, mask);
+
+    updateMatchInfo();
+    renderBoard();
+    els.matchMessage.textContent = "Собирайте 3+ одинаковых фишек за ограниченное число ходов.";
+    showScreen("match3");
+  }
+
+  function restartCurrentLevel() {
+    if (currentLevelIndex == null) return;
+    startLevel(currentLevelIndex);
+  }
+
+  function initPetSelect() {
+    let selectedPet = null;
+    els.petCards.forEach(card => {
+      card.addEventListener("click", () => {
+        selectedPet = card.dataset.pet;
+        state.petType = selectedPet;
+        els.petCards.forEach(c => c.classList.remove("selected"));
+        card.classList.add("selected");
+        els.btnPetSelectNext.disabled = false;
+      });
     });
 
-    score += 10 * matches.length;
-    scoreCurrentEl.textContent = score.toString();
+    els.btnPetSelectNext.addEventListener("click", () => {
+      if (!state.petType) return;
+      const typeName =
+        state.petType === "cat" ? "кошку" :
+        state.petType === "dog" ? "собаку" : "хомяка";
+      els.petNameSubtitle.textContent =
+        `Ваш ${typeName} ждёт тёплое имя.`;
+      showScreen("petName");
+    });
 
-    setTimeout(() => {
-      matches.forEach(p => {
-        const cellEl = matchBoardEl.querySelector(
-          `.cell[data-row="${p.row}"][data-col="${p.col}"]`
-        );
-        currentBoard[p.row][p.col] = null;
-        if (cellEl) cellEl.innerHTML = "";
-      });
-      applyGravity();
-      refillBoard();
-    }, 260);
+    els.btnCreatePet.addEventListener("click", () => {
+      const name = els.petNameInput.value.trim();
+      if (!name) {
+        showAlert("Дайте питомцу имя, чтобы продолжить 🧡");
+        return;
+      }
+      state.petName = name;
+      state.satiety = 100;
+      state.mood = 100;
+      state.lastDecayTs = Date.now();
+      updatePetUI();
+      saveState();
+      showScreen("petMain");
+      startDecayTimer();
+    });
+
+    els.petNameInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        els.btnCreatePet.click();
+      }
+    });
   }
 
-  function applyGravity() {
-    for (let c = 0; c < boardCols; c++) {
-      for (let r = boardRows - 1; r >= 0; r
+  function initApp() {
+    loadState();
+    initUserInfo();
+    updatePetUI();
+    buildLevels();
+    startDecayTimer();
+
+    if (state.petType && state.petName) {
+      applyDecay();
+      updatePetUI();
+      showScreen("petMain");
+    } else if (state.petType && !state.petName) {
+      showScreen("petName");
+    } else {
+      showScreen("petSelect");
+    }
+
+    initPetSelect();
+
+    els.btnQuickCare.addEventListener("click", () => {
+      carePet({ satietyDelta: 0, moodDelta: 10 });
+    });
+
+    els.btnOpenShop.addEventListener("click", () => {
+      els.shopOverlay.classList.add("visible");
+      els.shopCoins.textContent = state.coins;
+      els.shopTabs.forEach(t => t.classList.remove("active"));
+      const first = els.shopTabs[0];
+      first.classList.add("active");
+      buildShopItems(first.dataset.tab);
+    });
+
+    els.btnCloseShop.addEventListener("click", () => {
+      els.shopOverlay.classList.remove("visible");
+    });
+
+    els.shopOverlay.addEventListener("click", (e) => {
+      if (e.target === els.shopOverlay) {
+        els.shopOverlay.classList.remove("visible");
+      }
+    });
+
+    els.shopTabs.forEach(tab => {
+      tab.addEventListener("click", () => {
+        els.shopTabs.forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+        buildShopItems(tab.dataset.tab);
+      });
+    });
+
+    els.btnToLevels.addEventListener("click", () => {
+      buildLevels();
+      showScreen("levelSelect");
+    });
+
+    els.btnBackToPetFromLevels.addEventListener("click", () => {
+      showScreen("petMain");
+    });
+
+    els.btnMatchBack.addEventListener("click", () => {
+      buildLevels();
+      showScreen("levelSelect");
+    });
+
+    els.btnRestartLevel.addEventListener("click", () => {
+      restartCurrentLevel();
+    });
+
+    els.btnMatchHint.addEventListener("click", () => {
+      showAlert("Ищите места, где можно собрать 3+ одинаковых фишки. Начните с нижних рядов — так появляются новые комбинации.");
+    });
+
+    els.btnClose.addEventListener("click", () => {
+      if (tg && tg.close) {
+        tg.close();
+      } else {
+        showAlert("В Telegram Mini App здесь окно закроется, а в браузере — не можем 🙂");
+      }
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", initApp);
+})();
+</script>
+</body>
+</html>
